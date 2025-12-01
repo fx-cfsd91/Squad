@@ -1,0 +1,5 @@
+Backup réalisé le 2025-11-26 à 00:00.
+
+Ce fichier est une sauvegarde horodatée du projet MonApp.
+
+Vous pouvez restaurer ce backup en copiant les fichiers dans le dossier principal.

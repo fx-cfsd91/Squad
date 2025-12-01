@@ -1,0 +1,46 @@
+[
+  {
+    "id": "mma-mercredi",
+    "label": "MMA & Krav",
+    "dayIndex": 2,
+    "startH": 20,
+    "startM": 30,
+    "endH": 22,
+    "endM": 30,
+    "active": true,
+    "isRecurring": true
+  },
+  {
+    "id": "mma-vendredi",
+    "label": "MMA & Krav",
+    "dayIndex": 4,
+    "startH": 20,
+    "startM": 30,
+    "endH": 22,
+    "endM": 30,
+    "active": true,
+    "isRecurring": true
+  },
+  {
+    "id": "kmix-kids-dimanche",
+    "label": "Kmix Kids",
+    "dayIndex": 6,
+    "startH": 10,
+    "startM": 0,
+    "endH": 11,
+    "endM": 0,
+    "active": true,
+    "isRecurring": true
+  },
+  {
+    "id": "warriors-dimanche",
+    "label": "Warriors",
+    "dayIndex": 6,
+    "startH": 11,
+    "startM": 0,
+    "endH": 12,
+    "endM": 30,
+    "active": true,
+    "isRecurring": true
+  }
+]

@@ -1,0 +1,62 @@
+INSTRUCTIONS POUR CONFIGURER LE SERVEUR IONOS
+===============================================
+
+PROBLÈME IDENTIFIÉ :
+- Le serveur Apache met en cache calendar.json
+- Les sauvegardes réussissent (save.php fonctionne)
+- Mais les lectures retournent toujours l'ancienne version
+
+SOLUTION : Créer/Modifier .htaccess à la racine du site
+
+1. CONNEXION AU SERVEUR
+   - Connectez-vous à votre espace IONOS
+   - Accédez au gestionnaire de fichiers (ou via FTP)
+   - Naviguez vers la racine de votre site (où se trouve calendar.json)
+
+2. CRÉER/MODIFIER .htaccess
+   - Si le fichier .htaccess existe déjà, ouvrez-le
+   - Sinon, créez un nouveau fichier nommé exactement : .htaccess
+   - Ajoutez ce code :
+
+------- DÉBUT DU CODE À COPIER -------
+# Désactiver le cache pour calendar.json
+<Files "calendar.json">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+    FileETag None
+</Files>
+
+# Désactiver le cache pour save.php également
+<Files "save.php">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+</Files>
+------- FIN DU CODE À COPIER -------
+
+3. SAUVEGARDER ET TESTER
+   - Enregistrez le fichier .htaccess
+   - Attendez 1-2 minutes
+   - Ouvrez https://cfsd91.com/calendar.json dans votre navigateur
+   - Faites CTRL+F5 pour forcer le rechargement
+   - Vérifiez que vous voyez maintenant seulement 2 slots au lieu de 6
+
+4. VÉRIFICATION DANS L'APP
+   - Retournez dans votre application
+   - Allez sur l'onglet Calendrier
+   - Les données devraient maintenant correspondre à vos dernières modifications
+
+5. SI ÇA NE FONCTIONNE PAS
+   - Vérifiez que le module mod_headers est activé sur votre serveur IONOS
+   - Contactez le support IONOS : "J'ai besoin d'activer mod_headers pour Apache"
+   - Alternative : Renommer calendar.json avec un timestamp à chaque sauvegarde
+
+NOTES IMPORTANTES :
+- Le fichier .htaccess doit être à la racine (même dossier que calendar.json)
+- Le point au début du nom est obligatoire : .htaccess
+- Sous Windows, le fichier peut apparaître caché
+- Vérifiez les permissions : 644 pour .htaccess
+
+CONTACT SUPPORT IONOS SI BESOIN :
+"Bonjour, j'ai besoin d'activer le module mod_headers sur mon hébergement
+pour contrôler le cache HTTP de mes fichiers JSON. Comment puis-je faire ?"

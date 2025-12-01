@@ -1,0 +1,70 @@
+[
+  {
+    "id": "eleve_cfsd91_001",
+    "nom": "ACHARI",
+    "prenom": "STEPHANE",
+    "naissance": "24/11/1993",
+    "discipline": "MMA",
+    "combattant": true,
+    "email": "stephane.achari@gmail.com",
+    "adresse": "34 rue des 3 Chênes, 91800 Brunoy",
+    "licence": "11412816K",
+    "genre": "H",
+    "age": 31,
+    "createdAt": "2025-11-05T20:30:00.000Z"
+  },
+  {
+    "id": "eleve_cfsd91_002",
+    "nom": "ADJAL",
+    "prenom": "ETHAN",
+    "naissance": "22/02/2016",
+    "discipline": "Krav-Maga",
+    "combattant": true,
+    "email": "ing.guerin@gmail.com",
+    "adresse": "19 rue de Yerres, 94440 VILLECRESNES",
+    "genre": "M",
+    "age": 9,
+    "createdAt": "2025-11-05T20:30:00.000Z"
+  },
+  {
+    "id": "eleve_cfsd91_003",
+    "nom": "ALEXANDRE",
+    "prenom": "MAXIME",
+    "naissance": "02/12/2014",
+    "discipline": "MMA",
+    "combattant": true,
+    "email": "lucile.col.249@gmail.com",
+    "adresse": "2 rue de la justice, 91230 MONTGERON",
+    "licence": "11595344K",
+    "genre": "M",
+    "age": 10,
+    "createdAt": "2025-11-05T20:30:00.000Z"
+  },
+  {
+    "id": "eleve_cfsd91_004",
+    "nom": "ANNE MOUTONNET",
+    "prenom": "AMY",
+    "naissance": "14/03/2015",
+    "discipline": "Krav-Maga",
+    "combattant": true,
+    "email": "stephaniemoutonnet@gmail.com",
+    "adresse": "48 rue de le Grange, 91330 YERRES",
+    "genre": "F",
+    "age": 10,
+    "createdAt": "2025-11-05T20:30:00.000Z"
+  },
+  {
+    "id": "eleve_cfsd91_005",
+    "nom": "ANSTETT-BADAS",
+    "prenom": "STELLA",
+    "naissance": "07/06/2009",
+    "discipline": "MMA",
+    "combattant": true,
+    "email": "chrystel.badas@free.fr",
+    "adresse": "1 impasse du moulin, 91330 YERRES",
+    "licence": "11480062D",
+    "genre": "F",
+    "age": 16,
+    "createdAt": "2025-11-05T20:30:00.000Z"
+  }
+]

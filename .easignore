@@ -1,0 +1,22 @@
+# Exclusions pour EAS Build
+node_modules/
+build-apk/
+assets/images_backup_*/
+*.zip
+*.ps1
+*.bak
+*.backup
+*.log
+*.tmp
+backup*/
+BACKUP_README.txt
+adhesion_mixed.txt
+INSTALLATION-COURS.txt
+scripts/
+server/
+android/build/
+android/app/build/
+android/app/intermediates/
+android/.gradle/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "env": {
+        "GOOGLE_SERVICES_JSON": "@/google-services.json"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "GOOGLE_SERVICES_JSON": "@/google-services.json"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "env": {
+        "GOOGLE_SERVICES_JSON": "@/google-services.json"
+      }
+    }
+  }
+}

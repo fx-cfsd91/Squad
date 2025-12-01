@@ -1,0 +1,24 @@
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+  Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+  Header set Access-Control-Allow-Headers "Content-Type, X-API-KEY, Authorization"
+</IfModule>
+
+# Permettre l'accès aux fichiers PHP
+<Files "*.php">
+  Require all granted
+</Files>
+
+# Désactiver le cache pour calendar.json
+<Files "calendar.json">
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+  FileETag None
+</Files>
+
+# Désactiver le cache pour save.php également
+<Files "save.php">
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  Header set Pragma "no-cache"
+</Files>

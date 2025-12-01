@@ -1,0 +1,489 @@
+// app/(tabs)/adhesion.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+const STORAGE_KEY = 'eleves_cfsd91';
+
+type Eleve = {
+  id: string; nom: string; prenom: string; naissance: string;
+  jour: string; discipline: string; combattant?: boolean; etudiant?: boolean; renouvellement?: boolean;
+  telUrgence?: string; telEleve?: string; email?: string; adresse?: string;
+  poids?: number | null; licence?: string; ceinture?: string; photo?: string;
+  createdAt: string;
+};
+
+const uuid = () =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0; const v = c === 'x' ? r : (r & 0x3) | 0x8; return v.toString(16);
+  });
+
+const normPhone = (p = '') => (p + '').replace(/\D+/g, '').replace(/^0033/, '0').replace(/^33/, '0');
+const isValidFRPhone = (p = '') => /^0[1-9](\d{8})$/.test(normPhone(p));
+
+const saveLocal = async (arr: Eleve[]) => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    console.log(`💾 Sauvegardé localement: ${arr.length} élèves`);
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde locale:', error);
+  }
+};
+
+const loadLocal = async (): Promise<Eleve[]> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('❌ Erreur chargement local:', error);
+    return [];
+  }
+};
+
+export default function Adhesion() {
+  // États du formulaire
+  const [nom, setNom] = useState(''); 
+  const [prenom, setPrenom] = useState('');
+  const [naissance, setNaissance] = useState(''); 
+  const [jour, setJour] = useState('');
+  const [discipline, setDiscipline] = useState(''); 
+  const [telUrgence, setTelUrgence] = useState('');
+  const [telEleve, setTelEleve] = useState(''); 
+  const [email, setEmail] = useState('');
+  const [adresse, setAdresse] = useState(''); 
+  const [licence, setLicence] = useState('');
+  const [ceinture, setCeinture] = useState(''); 
+  const [photo, setPhoto] = useState<string>('');
+
+  // Flags
+  const [isCompetiteur, setIsCompetiteur] = useState(false);
+  const [isEtudiant, setIsEtudiant] = useState(false);
+  const [isRenouvellement, setIsRenouvellement] = useState(false);
+
+  // États système
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('');
+
+  // Admin
+  const [isAdminConnected, setIsAdminConnected] = useState(false);
+
+  // Vérifier le statut admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const adminStatus = await AsyncStorage.getItem('isAdminConnected');
+      setIsAdminConnected(adminStatus === 'true');
+    };
+
+    checkAdminStatus();
+    const interval = setInterval(checkAdminStatus, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Focus effect pour recharger le statut admin
+  useFocusEffect(
+    useCallback(() => {
+      const checkAdminStatus = async () => {
+        const adminStatus = await AsyncStorage.getItem('isAdminConnected');
+        setIsAdminConnected(adminStatus === 'true');
+      };
+      checkAdminStatus();
+    }, [])
+  );
+
+  // Fonction d'ajout d'élève
+  const onSubmit = async () => {
+    if (!nom.trim() || !prenom.trim() || !naissance || !jour || !discipline) {
+      Alert.alert('Champs obligatoires', 'Renseigne Nom, Prénom, Date, Jour, Discipline.'); 
+      return;
+    }
+    if (telUrgence && !isValidFRPhone(telUrgence)) return Alert.alert('Erreur', "Téléphone d'urgence invalide (FR).");
+    if (telEleve && !isValidFRPhone(telEleve)) return Alert.alert('Erreur', 'Téléphone élève invalide (FR).');
+    if (telUrgence && telEleve && normPhone(telUrgence) === normPhone(telEleve))
+      return Alert.alert('Erreur', "Le téléphone élève doit être différent de l'urgence.");
+
+    const d: Eleve = {
+      id: uuid(), 
+      nom: nom.trim(), 
+      prenom: prenom.trim(), 
+      naissance, 
+      jour, 
+      discipline,
+      combattant: isCompetiteur, 
+      etudiant: isEtudiant, 
+      renouvellement: isRenouvellement, 
+      telUrgence: telUrgence.trim(), 
+      telEleve: telEleve.trim(),
+      email: email.trim(), 
+      adresse: adresse.trim(), 
+      poids: null, 
+      licence: licence.trim(),
+      ceinture, 
+      photo, 
+      createdAt: new Date().toISOString()
+    };
+
+    const list = await loadLocal(); 
+    list.push(d); 
+    await saveLocal(list);
+    Alert.alert('Élève ajouté', 'La fiche va s\'ouvrir.', [
+      { text: 'Ouvrir la fiche', onPress: () => router.push(`/fiche/${d.id}`) }, 
+      { text: 'OK' }
+    ]);
+
+    // Reset du formulaire
+    setNom(''); setPrenom(''); setNaissance(''); setJour(''); setDiscipline('');
+    setTelUrgence(''); setTelEleve(''); setEmail(''); setAdresse(''); setLicence(''); setCeinture('');
+    setPhoto('');
+    setIsCompetiteur(false);
+    setIsEtudiant(false);
+    setIsRenouvellement(false);
+  };
+
+  // Fonction de sélection de photo
+  const pickPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { 
+      Alert.alert('Caméra refusée', 'Autorise la caméra pour prendre une photo.'); 
+      return; 
+    }
+    const r = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+      allowsEditing: true, 
+      aspect: [1, 1], 
+      quality: 0.7 
+    });
+    if (!r.canceled && r.assets?.[0]) setPhoto(r.assets[0].uri);
+  };
+
+  // Import CSV
+  const handleImportEleves = async () => {
+    console.log('📂 Import CSV - Démarrage');
+    try {
+      setLoading(true);
+      setStatus('Sélection du fichier...');
+
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/tab-separated-values', 'text/comma-separated-values'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        setStatus('Import annulé');
+        setLoading(false);
+        return;
+      }
+
+      const file = result.assets[0];
+      console.log('📂 Fichier sélectionné:', file.name);
+      setStatus(`Lecture de ${file.name}...`);
+
+      const response = await fetch(file.uri);
+      const csvText = await response.text();
+      console.log('📂 Contenu CSV lu, longueur:', csvText.length);
+
+      const eleves = parseCSVToEleves(csvText);
+      console.log(`📂 ${eleves.length} élèves parsés`);
+
+      if (eleves.length === 0) {
+        Alert.alert('Aucun élève', 'Le fichier ne contient aucun élève valide.');
+        setStatus('');
+        setLoading(false);
+        return;
+      }
+
+      // Import incrémental : ajouter seulement les nouveaux
+      const existingEleves = await loadLocal();
+      console.log(`📂 ${existingEleves.length} élèves existants`);
+
+      const newEleves = eleves.filter(nouvelEleve => {
+        const existeDeja = existingEleves.some(existant => 
+          (existant.email && nouvelEleve.email && existant.email.toLowerCase() === nouvelEleve.email.toLowerCase()) ||
+          (existant.licence && nouvelEleve.licence && existant.licence === nouvelEleve.licence)
+        );
+        return !existeDeja;
+      });
+
+      console.log(`📂 ${newEleves.length} nouveaux élèves à ajouter`);
+
+      if (newEleves.length === 0) {
+        Alert.alert('Aucun nouvel élève', 'Tous les élèves du fichier sont déjà présents (même email ou licence).');
+        setStatus('');
+        setLoading(false);
+        return;
+      }
+
+      const finalList = [...existingEleves, ...newEleves];
+      await saveLocal(finalList);
+
+      setStatus(`✅ ${newEleves.length} nouveaux élèves importés`);
+      Alert.alert(
+        'Import réussi', 
+        `${newEleves.length} nouveaux élèves ajoutés.\nTotal: ${finalList.length} élèves.`,
+        [{ text: 'OK' }]
+      );
+
+    } catch (error) {
+      console.error('❌ Erreur import:', error);
+      Alert.alert('Erreur Import', `Erreur lors de l'import: ${error}`);
+      setStatus('❌ Erreur import');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setStatus(''), 3000);
+    }
+  };
+
+  const parseCSVToEleves = (csvText: string): Eleve[] => {
+    const lines = csvText.split('\n').map(line => line.trim()).filter(line => line);
+    if (lines.length <= 1) return [];
+
+    const eleves: Eleve[] = [];
+    
+    // Ignorer la première ligne (en-têtes)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+
+      // Utiliser une regex pour parser le CSV en tenant compte des guillemets
+      const columns = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          columns.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      columns.push(current.trim());
+
+      // Nettoyer les guillemets
+      const cleanColumns = columns.map(col => col.replace(/^"|"$/g, ''));
+
+      if (cleanColumns.length < 10) {
+        console.log(`⚠️ Ligne ${i} ignorée: pas assez de colonnes (${cleanColumns.length})`);
+        continue;
+      }
+
+      // Mapping CFSD91 : colonnes 0-10
+      const [licence, nom, prenom, email, adresse, naissance, telUrgence, telEleve, ceinture, discipline, jour] = cleanColumns;
+
+      if (!nom || !prenom) {
+        console.log(`⚠️ Ligne ${i} ignorée: nom ou prénom manquant`);
+        continue;
+      }
+
+      const eleve: Eleve = {
+        id: uuid(),
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+        naissance: naissance || '',
+        jour: jour || '',
+        discipline: discipline || '',
+        combattant: false,
+        etudiant: false,
+        renouvellement: false,
+        telUrgence: telUrgence || '',
+        telEleve: telEleve || '',
+        email: email || '',
+        adresse: adresse || '',
+        licence: licence || '',
+        ceinture: ceinture || '',
+        photo: '',
+        createdAt: new Date().toISOString()
+      };
+
+      eleves.push(eleve);
+    }
+
+    return eleves;
+  };
+
+  const handleResetData = async () => {
+    console.log('🔄 Reset Data - Démarrage');
+    Alert.alert(
+      'Reset vers 5 élèves de test',
+      'Voulez-vous vraiment supprimer tous les élèves et repartir des 5 élèves de test ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Reset', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              setStatus('Reset en cours...');
+              
+              const testStudents = [
+                { id: uuid(), nom: 'Martin', prenom: 'Lucas', naissance: '2010-05-15', jour: 'Lundi', discipline: 'Karaté enfant', combattant: false, etudiant: false, renouvellement: false, telUrgence: '0123456789', telEleve: '', email: 'lucas.martin@email.com', adresse: '123 Rue Test', licence: 'TEST001', ceinture: 'Blanche', photo: '', createdAt: new Date().toISOString() },
+                { id: uuid(), nom: 'Dubois', prenom: 'Emma', naissance: '2008-09-22', jour: 'Mercredi', discipline: 'Judo', combattant: false, etudiant: false, renouvellement: false, telUrgence: '0123456788', telEleve: '', email: 'emma.dubois@email.com', adresse: '456 Avenue Test', licence: 'TEST002', ceinture: 'Jaune', photo: '', createdAt: new Date().toISOString() },
+                { id: uuid(), nom: 'Bernard', prenom: 'Hugo', naissance: '2011-03-08', jour: 'Vendredi', discipline: 'Karaté enfant', combattant: false, etudiant: false, renouvellement: false, telUrgence: '0123456787', telEleve: '', email: 'hugo.bernard@email.com', adresse: '789 Boulevard Test', licence: 'TEST003', ceinture: 'Orange', photo: '', createdAt: new Date().toISOString() },
+                { id: uuid(), nom: 'Petit', prenom: 'Léa', naissance: '2009-12-11', jour: 'Mardi', discipline: 'Judo', combattant: false, etudiant: false, renouvellement: false, telUrgence: '0123456786', telEleve: '', email: 'lea.petit@email.com', adresse: '321 Place Test', licence: 'TEST004', ceinture: 'Verte', photo: '', createdAt: new Date().toISOString() },
+                { id: uuid(), nom: 'Moreau', prenom: 'Nathan', naissance: '2007-07-19', jour: 'Jeudi', discipline: 'Karaté adulte', combattant: false, etudiant: false, renouvellement: false, telUrgence: '0123456785', telEleve: '', email: 'nathan.moreau@email.com', adresse: '654 Impasse Test', licence: 'TEST005', ceinture: 'Bleue', photo: '', createdAt: new Date().toISOString() }
+              ];
+              
+              await saveLocal(testStudents);
+              setStatus('✅ Reset effectué : 5 élèves de test');
+              Alert.alert('Reset terminé', '5 élèves de test ont été créés.');
+              
+            } catch (error) {
+              console.error('❌ Erreur reset:', error);
+              setStatus('❌ Erreur lors du reset');
+              Alert.alert('Erreur', 'Erreur lors du reset');
+            } finally {
+              setLoading(false);
+              setTimeout(() => setStatus(''), 3000);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleClearAllData = async () => {
+    console.log('🔄 Test Reset Data');
+    Alert.alert(
+      'Test Reset',
+      'Voulez-vous vraiment tester le reset ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Reset', 
+          onPress: async () => {
+            setLoading(true);
+            setStatus('Test reset...');
+            
+            // Attendre 2 secondes pour simuler
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            setStatus('✅ Test terminé');
+            setLoading(false);
+            
+            Alert.alert('Reset Test', 'Le test de reset a fonctionné !');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleClearAllData = async () => {
+    console.log('🗑️ Test Clear All');
+    Alert.alert(
+      'Test Clear All',
+      'Voulez-vous vraiment tester le clear all ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Clear All', 
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            setStatus('Test clear all...');
+            
+            // Attendre 2 secondes pour simuler
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            setStatus('✅ Test terminé');
+            setLoading(false);
+            
+            Alert.alert('Clear All Test', 'Le test de clear all a fonctionné !');
+          }
+        }
+      ]
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Adhésion - Test Admin</Text>
+      
+      {status ? <Text style={styles.status}>{status}</Text> : null}
+      
+      <Text style={styles.adminStatus}>
+        Admin connecté: {isAdminConnected ? '✅ OUI' : '❌ NON'}
+      </Text>
+
+      {isAdminConnected && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: loading ? '#94a3b8' : '#dc2626' }]}
+            onPress={handleResetData}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>🔄 Test Reset</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: loading ? '#94a3b8' : '#991b1b' }]}
+            onPress={handleClearAllData}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>🗑️ Test Clear All</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!isAdminConnected && (
+        <Text style={styles.message}>
+          Connectez-vous en tant qu'admin pour voir les boutons
+        </Text>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    padding: 20,
+    justifyContent: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  adminStatus: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  status: {
+    color: '#22c55e',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    gap: 15,
+  },
+  button: {
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  message: {
+    color: '#777',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+});

@@ -1,0 +1,73 @@
+{
+  "slots": [
+    {
+      "id": "cours-1",
+      "label": "Cours Adultes - Tous niveaux",
+      "dayIndex": 1,
+      "startH": 19,
+      "startM": 0,
+      "endH": 20,
+      "endM": 30,
+      "active": true,
+      "isRecurring": true
+    },
+    {
+      "id": "cours-2",
+      "label": "Cours Enfants 8-12 ans",
+      "dayIndex": 2,
+      "startH": 18,
+      "startM": 0,
+      "endH": 19,
+      "endM": 0,
+      "active": true,
+      "isRecurring": true
+    },
+    {
+      "id": "cours-3",
+      "label": "Cours Avancés",
+      "dayIndex": 4,
+      "startH": 20,
+      "startM": 0,
+      "endH": 21,
+      "endM": 30,
+      "active": true,
+      "isRecurring": true
+    },
+    {
+      "id": "comp-1",
+      "label": "Championnat Régional Île-de-France",
+      "specificDate": "2025-12-07",
+      "startH": 9,
+      "startM": 0,
+      "endH": 17,
+      "endM": 0,
+      "details": "Compétition ouverte à tous les niveaux. Inscription avant le 30 novembre. Lieu: Paris - Gymnase Jean Jaurès",
+      "active": true,
+      "isRecurring": false
+    },
+    {
+      "id": "comp-2",
+      "label": "Stage Intensif Techniques Avancées",
+      "specificDate": "2025-12-14",
+      "startH": 14,
+      "startM": 0,
+      "endH": 17,
+      "endM": 0,
+      "details": "Stage de 3 heures avec instructeur national. Niveau intermédiaire minimum requis. Lieu: Dojo Municipal",
+      "active": true,
+      "isRecurring": false
+    },
+    {
+      "id": "comp-3",
+      "label": "Coupe de France FEKM",
+      "specificDate": "2026-01-18",
+      "startH": 8,
+      "startM": 30,
+      "endH": 18,
+      "endM": 0,
+      "details": "Championnat national. Pré-inscription obligatoire avant le 5 janvier. Lieu: Lyon - Palais des Sports",
+      "active": true,
+      "isRecurring": false
+    }
+  ]
+}

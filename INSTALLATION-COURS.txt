@@ -1,0 +1,88 @@
+INSTRUCTIONS D'INSTALLATION SUR IONOS
+======================================
+
+FICHIERS À UPLOADER SUR LE SERVEUR IONOS :
+-------------------------------------------
+
+1. **courses.php**
+   - Source : server/courses.php
+   - Destination : /clickandbuilds/Cfsd91/courses.php (à la racine, même dossier que save.php)
+   - Permissions : 755
+
+2. **courses.json**
+   - Source : server/courses.json
+   - Destination : /clickandbuilds/Cfsd91/courses.json (à la racine)
+   - Permissions : 666 (doit être inscriptible par PHP)
+
+ÉTAPES D'INSTALLATION :
+-----------------------
+
+1. Connectez-vous au gestionnaire de fichiers IONOS
+2. Allez dans /clickandbuilds/Cfsd91/
+3. Uploadez courses.php et courses.json
+4. Vérifiez les permissions :
+   - courses.php : 755
+   - courses.json : 666
+
+VÉRIFICATION :
+--------------
+
+1. Testez l'API :
+   - Ouvrez https://cfsd91.com/courses.php dans votre navigateur
+   - Vous devriez voir : {"courses":[],"lastUpdate":"..."}
+
+2. Testez dans l'app :
+   - Mode admin activé
+   - Cliquez sur la tuile "COURS"
+   - Essayez d'ajouter un cours
+   - Vérifiez que le cours apparaît dans la liste
+
+FONCTIONNALITÉS :
+-----------------
+
+✅ Ajouter un cours récurrent (mercredi ou vendredi uniquement)
+✅ Définir les horaires (HH:MM)
+✅ Ajouter des détails/notes
+✅ Activer/désactiver un cours (switch)
+✅ Modifier un cours existant
+✅ Supprimer un cours
+✅ Authentification via X-API-KEY: Mac131080
+✅ Stockage synchronisé sur serveur IONOS
+
+SÉCURITÉ :
+----------
+
+- L'API nécessite le header X-API-KEY avec la valeur 'Mac131080' pour toutes les modifications
+- Les lectures (GET) sont publiques
+- Les écritures (POST, PUT, DELETE) sont protégées
+
+AFFICHAGE :
+-----------
+
+- Les cours sont groupés par jour (Mercredi / Vendredi)
+- Les cours inactifs sont grisés et barrés
+- Interface sombre adaptée au thème de l'app
+- Modal pour ajouter/modifier les cours
+- Confirmation avant suppression
+
+STRUCTURE DES DONNÉES :
+-----------------------
+
+{
+  "id": "course_673248f4c8e9f7.12345678",
+  "day": 3,                      // 3=mercredi, 5=vendredi
+  "startTime": "14:00",          // Format HH:MM
+  "endTime": "15:30",            // Format HH:MM
+  "details": "Cours adultes débutants",
+  "active": true,                // true=actif, false=annulé
+  "createdAt": "2025-11-11 12:00:00",
+  "updatedAt": "2025-11-11 13:00:00"
+}
+
+NOTES :
+-------
+
+- La récurrence est gérée côté frontend lors de l'affichage du calendrier
+- Chaque cours stocké représente un modèle récurrent (tous les mercredis ou vendredis)
+- Pour annuler UNE occurrence spécifique d'un cours, utiliser le système de toggle "active"
+- Les cours supprimés sont définitivement retirés de la base
