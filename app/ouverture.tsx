@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Text, Platform, Animated } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 
 export default function Ouverture() {
   // Static require: Metro will attempt to resolve this at bundle time.
@@ -37,7 +37,7 @@ export default function Ouverture() {
     }, exitDelay);
 
     const navTimer = setTimeout(() => {
-      router.replace('/(tabs)');
+      router.replace('/tabs');
     }, totalDelay);
 
     return () => {

@@ -1,5 +1,5 @@
 // CameraType n'est pas une valeur, utiliser Camera.Constants.Type.front
-// app/(tabs)/adhesion.tsx
+// app/tabs/adhesion.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';

@@ -19,6 +19,7 @@ export default function Presence() {
   const [eleves, setEleves] = useState<any[]>([]);
   const [oldPresences, setOldPresences] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fonction pour lire les fichiers de présence précédents
   const loadOldPresences = async () => {
@@ -67,7 +68,6 @@ export default function Presence() {
   // Charger les élèves depuis le serveur
   const loadElevesFromServer = async () => {
     try {
-      console.log('🎯 Presence - Chargement depuis le serveur...');
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'no-store',
         headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
@@ -75,10 +75,8 @@ export default function Presence() {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const arr = await r.json();
       if (!Array.isArray(arr)) throw new Error('JSON inattendu');
-      console.log('🎯 Presence - Chargé:', arr.length, 'élèves');
       setEleves(arr);
     } catch (error: any) {
-      console.error('💥 Erreur chargement élèves:', error);
       Alert.alert('Erreur', `Impossible de charger les élèves: ${error?.message || 'Erreur inconnue'}`);
     }
   };
@@ -148,9 +146,7 @@ export default function Presence() {
         Alert.alert('Export CSV', `Fichier sauvegardé: ${fileName}`);
       }
 
-      console.log('📊 CSV exporté:', eleves.length, 'élèves');
     } catch (error: any) {
-      console.error('💥 Erreur export CSV:', error);
       Alert.alert('Erreur', `Impossible d'exporter le CSV: ${error?.message || 'Erreur inconnue'}`);
     }
   };
@@ -164,6 +160,26 @@ export default function Presence() {
     setPresent(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const resetPresence = () => {
+    Alert.alert(
+      'Réinitialiser',
+      'Êtes-vous sûr de vouloir désélectionner tous les élèves présents ?',
+      [
+        { text: 'Annuler', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Réinitialiser',
+          onPress: () => {
+            console.log('Resetting presence from:', present);
+            setPresent({});
+            setRefreshKey(k => k + 1);
+            console.log('Presence reset to empty');
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000', padding: 0 }}>
       <HeaderBar
@@ -173,10 +189,13 @@ export default function Presence() {
         iconBgColor="#fff"
         right={(
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Pressable onPress={resetPresence} style={{ marginRight: 8 }}>
+              <Ionicons name="refresh-outline" size={22} color="#000" />
+            </Pressable>
             <Pressable onPress={exportToCSV} style={{ marginRight: 8 }}>
               <Ionicons name="download-outline" size={22} color="#000" />
             </Pressable>
-            <Pressable onPress={() => router.push('/')}> 
+            <Pressable onPress={() => router.back()}> 
               <Ionicons name="home" size={22} color="#000" />
             </Pressable>
           </View>
@@ -191,86 +210,90 @@ export default function Presence() {
           onChangeText={setSearch}
         />
         <Text style={styles.count}>{`Présents: ${Object.values(present).filter(Boolean).length} / ${filtered.length}`}</Text>
+        <Pressable onPress={resetPresence} style={{ padding: 8, backgroundColor: '#ef444466', borderRadius: 6, marginLeft: 8 }}>
+          <Ionicons name="refresh-outline" size={18} color="#ef4444" />
+        </Pressable>
       </View>
       {filtered.length === 0 ? (
         <View style={styles.empty}><Text style={{ color: '#999' }}>Aucun élève trouvé.</Text></View>
       ) : (
-        <>
-          <FlatList
-            data={filtered}
-            keyExtractor={item => item.id}
-            numColumns={2}
-            contentContainerStyle={styles.grid}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.tile, present[item.id] && styles.tilePresent]}
-                onPress={() => togglePresent(item.id)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.phWrap}>
-                  <Image source={item.photo ? { uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` } : require('../../assets/images/partial-react-logo.png')} style={styles.photo} />
-                </View>
-                <View style={styles.caption}>
-                  <Text style={styles.name}>{item.prenom} {item.nom}</Text>
-                  <Text style={styles.sub}>{item.discipline}{item.jour ? ` • ${item.jour}` : ''}</Text>
-                </View>
-                {present[item.id] && (
-                  <View style={styles.presentBadge}><Text style={styles.presentBadgeText}>Présent</Text></View>
-                )}
-              </TouchableOpacity>
-            )}
-          />
-          {/* Tableau des élèves présents */}
-          <View style={styles.presentTableWrap}>
-            <Text style={styles.presentTableDate}>Date de saisie : {new Date().toLocaleDateString()}</Text>
-            <Text style={styles.presentTableTitle}>Élèves présents :</Text>
-            <View style={styles.presentTable}>
-              {filtered.filter(e => present[e.id]).length === 0 ? (
-                <Text style={styles.presentTableEmpty}>Aucun élève présent.</Text>
-              ) : (
-                filtered.filter(e => present[e.id]).map(e => (
-                  <View key={e.id} style={styles.presentTableRow}>
-                    <Text style={styles.presentTableCell}>{e.prenom} {e.nom}</Text>
-                    <Text style={styles.presentTableCell}>{e.discipline}</Text>
-                    <Text style={styles.presentTableCell}>{e.jour}</Text>
-                  </View>
-                ))
+        <FlatList
+          key={refreshKey}
+          data={filtered}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          extraData={present}
+          contentContainerStyle={styles.grid}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.tile, present[item.id] && styles.tilePresent]}
+              onPress={() => togglePresent(item.id)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.phWrap}>
+                <Image source={item.photo ? { uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` } : require('../../assets/images/partial-react-logo.png')} style={styles.photo} />
+              </View>
+              <View style={styles.caption}>
+                <Text style={styles.name}>{item.prenom} {item.nom}</Text>
+                <Text style={styles.sub}>{item.discipline}{item.jour ? ` • ${item.jour}` : ''}</Text>
+              </View>
+              {present[item.id] && (
+                <View style={styles.presentBadge}><Text style={styles.presentBadgeText}>Présent</Text></View>
               )}
-            </View>
-            {oldPresences.length > 0 && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: '#fff', fontWeight: 'bold', marginBottom: 4 }}>Historique local :</Text>
-                {/* Sélecteur de date */}
-                <View style={{ marginBottom: 8 }}>
-                  {oldPresences.map((p, idx) => (
-                    <TouchableOpacity key={idx} style={{ padding: 6, backgroundColor: selectedDate === p.date ? '#ef4444' : '#222', borderRadius: 6, marginBottom: 4 }} onPress={() => setSelectedDate(p.date)}>
-                      <Text style={{ color: '#fff', fontSize: 12 }}>
-                        Date : {p.date && !isNaN(Date.parse(p.date ?? '')) ? new Date(p.date).toLocaleDateString() : 'Date invalide'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {/* Affichage des présences pour la date sélectionnée */}
-                {selectedDate && (
-                  <View style={{ marginBottom: 6 }}>
-                    <Text style={{ color: '#cbd5e1', fontSize: 12 }}>
-                      Présents le {selectedDate && !isNaN(Date.parse(selectedDate ?? '')) ? new Date(selectedDate ?? '').toLocaleDateString() : 'Date invalide'} :
-                    </Text>
-                    {(() => {
-                      const found = oldPresences.find(p => p.date === selectedDate);
-                      if (!found || !Array.isArray(found.list) || found.list.length === 0) {
-                        return <Text style={{ color: '#fff', fontSize: 11 }}>Aucun élève présent.</Text>;
-                      }
-                      return found.list.map((e: any) => (
-                        <Text key={e.id} style={{ color: '#fff', fontSize: 11 }}>{e.prenom} {e.nom} • {e.discipline} • {e.jour}</Text>
-                      ));
-                    })()}
-                  </View>
+            </TouchableOpacity>
+          )}
+          ListFooterComponent={() => (
+            <View style={styles.presentTableWrap}>
+              <Text style={styles.presentTableDate}>Date de saisie : {new Date().toLocaleDateString()}</Text>
+              <Text style={styles.presentTableTitle}>Élèves présents :</Text>
+              <View style={styles.presentTable}>
+                {filtered.filter(e => present[e.id]).length === 0 ? (
+                  <Text style={styles.presentTableEmpty}>Aucun élève présent.</Text>
+                ) : (
+                  filtered.filter(e => present[e.id]).map(e => (
+                    <View key={e.id} style={styles.presentTableRow}>
+                      <Text style={styles.presentTableCell}>{e.prenom} {e.nom}</Text>
+                      <Text style={styles.presentTableCell}>{e.discipline}</Text>
+                      <Text style={styles.presentTableCell}>{e.jour}</Text>
+                    </View>
+                  ))
                 )}
               </View>
-            )}
-          </View>
-        </>
+              {oldPresences.length > 0 && (
+                <View style={{ marginTop: 10 }}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', marginBottom: 4 }}>Historique local :</Text>
+                  {/* Sélecteur de date */}
+                  <View style={{ marginBottom: 8 }}>
+                    {oldPresences.map((p, idx) => (
+                      <TouchableOpacity key={idx} style={{ padding: 6, backgroundColor: selectedDate === p.date ? '#ef4444' : '#222', borderRadius: 6, marginBottom: 4 }} onPress={() => setSelectedDate(p.date)}>
+                        <Text style={{ color: '#fff', fontSize: 12 }}>
+                          Date : {p.date && !isNaN(Date.parse(p.date ?? '')) ? new Date(p.date).toLocaleDateString() : 'Date invalide'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {/* Affichage des présences pour la date sélectionnée */}
+                  {selectedDate && (
+                    <View style={{ marginBottom: 6 }}>
+                      <Text style={{ color: '#cbd5e1', fontSize: 12 }}>
+                        Présents le {selectedDate && !isNaN(Date.parse(selectedDate ?? '')) ? new Date(selectedDate ?? '').toLocaleDateString() : 'Date invalide'} :
+                      </Text>
+                      {(() => {
+                        const found = oldPresences.find(p => p.date === selectedDate);
+                        if (!found || !Array.isArray(found.list) || found.list.length === 0) {
+                          return <Text style={{ color: '#fff', fontSize: 11 }}>Aucun élève présent.</Text>;
+                        }
+                        return found.list.map((e: any) => (
+                          <Text key={e.id} style={{ color: '#fff', fontSize: 11 }}>{e.prenom} {e.nom} • {e.discipline} • {e.jour}</Text>
+                        ));
+                      })()}
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
+        />
       )}
     </View>
   );

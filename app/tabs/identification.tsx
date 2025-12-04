@@ -124,7 +124,7 @@ export default function Identification() {
         <TouchableOpacity style={styles.button} onPress={handleIdentify}>
           <Text style={styles.buttonText}>S'identifier</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => router.push('/')}> 
+        <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => router.back()}> 
           <Text style={styles.buttonText}>Retour</Text>
         </TouchableOpacity>
       </View>

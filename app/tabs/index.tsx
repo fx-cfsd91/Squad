@@ -1,4 +1,4 @@
-// app/(tabs)/index.tsx
+// app/tabs/index.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -99,7 +99,7 @@ export default function Home() {
         setCoursesData(data);
       }
     } catch (error) {
-      console.error('Erreur chargement courses.json:', error);
+      // Erreur de chargement silencieuse
     }
   };
 
@@ -119,7 +119,7 @@ export default function Home() {
         setEventsData(data);
       }
     } catch (error) {
-      console.error('Erreur chargement events.json:', error);
+      // Erreur de chargement silencieuse
     }
   };
 
@@ -144,12 +144,12 @@ export default function Home() {
   );
 
   const allCards = useMemo(() => ([
-  { key: 'adh',  title: 'ADHÉSION',   image: require('../../assets/images/adhesion-bg.png'), onPress: () => router.push('/(tabs)/adhesion'),       adminOnly: false },
-  { key: 'eval', title: 'EVALUATIONS',  image: require('../../assets/images/evaluations-bg.png'), onPress: () => router.push('/(tabs)/evaluations'),   adminOnly: false, identifieOnly: true },
-  { key: 'rec',  title: 'RÉCAPITULATIF',      image: require('../../assets/images/recapitulatif-bg.png'), onPress: () => router.push('/(tabs)/recapitulatif'), adminOnly: true  },
-  { key: 'pres', title: 'PRESENCE',    image: require('../../assets/images/presence-bg.png'), onPress: () => router.push('/(tabs)/Presence'),       adminOnly: true },
-  { key: 'cours', title: 'COURS',      image: require('../../assets/images/image_cours.png'), onPress: () => router.push('/(tabs)/courses'),        adminOnly: true },
-  { key: 'events', title: 'ÉVÉNEMENTS',      image: require('../../assets/images/image_evts.png'), onPress: () => router.push('/(tabs)/events'),        adminOnly: true },
+  { key: 'adh',  title: 'ADHÉSION',   image: require('../../assets/images/adhesion-bg.png'), onPress: () => router.push('/tabs/adhesion'),       adminOnly: false },
+  { key: 'eval', title: 'EVALUATIONS',  image: require('../../assets/images/evaluations-bg.png'), onPress: () => router.push('/tabs/evaluations'),   adminOnly: false, identifieOnly: true },
+  { key: 'rec',  title: 'RÉCAPITULATIF',      image: require('../../assets/images/recapitulatif-bg.png'), onPress: () => router.push('/tabs/recapitulatif'), adminOnly: true  },
+  { key: 'pres', title: 'PRESENCE',    image: require('../../assets/images/presence-bg.png'), onPress: () => router.push('/tabs/Presence'),       adminOnly: true },
+  { key: 'cours', title: 'COURS',      image: require('../../assets/images/image_cours.png'), onPress: () => router.push('/tabs/courses'),        adminOnly: true },
+  { key: 'events', title: 'ÉVÉNEMENTS',      image: require('../../assets/images/image_evts.png'), onPress: () => router.push('/tabs/events'),        adminOnly: true },
   ]), []);
 
   // Filtrer les cartes selon l'état admin et identifié
@@ -349,12 +349,15 @@ export default function Home() {
       <View style={[s.screen, { minHeight: height }]}>  
         {/* --- Top bar --- */}
         <View style={s.topbar}>
-          <Text style={s.headerTitle}>Accueil</Text>
+          <View>
+            <Text style={s.headerTitle}>Accueil</Text>
+            <Text style={{color:'#999',fontSize:10,marginTop:2}}>Version V1 Android</Text>
+          </View>
           <View style={s.topRight}>
             <Pressable style={s.iconBtn} onPress={toggleAdmin}>
               <Ionicons name={admin ? 'shield-checkmark' : 'lock-closed-outline'} size={28} color={admin ? '#22c55e' : '#000'} />
             </Pressable>
-            <Pressable style={[s.iconBtn, { marginLeft: 6 }]} onPress={() => router.push('/identification')}>
+            <Pressable style={[s.iconBtn, { marginLeft: 6 }]} onPress={() => router.push('/tabs/identification')}>
               <Ionicons 
                 name={identifie ? 'person-circle' : 'person-circle-outline'} 
                 size={28} 
