@@ -78,43 +78,43 @@ switch ($method) {
     case 'POST':
         // Ajouter un ou plusieurs nouveaux élèves
         $input = json_decode(file_get_contents('php://input'), true);
-        
+        // Log temporaire pour debug : retour de la donnée reçue et du champ photo
         if (!$input) {
             http_response_code(400);
             echo json_encode(['error' => 'Bad Request', 'message' => 'Invalid JSON']);
             exit;
         }
-        
+        // Afficher le champ photo reçu (pour debug)
+        $debugPhoto = '';
+        if (isset($input['photo'])) {
+            $debugPhoto = substr($input['photo'], 0, 50) . (strlen($input['photo']) > 50 ? '...' : '');
+        } elseif (isset($input['data'][0]['photo'])) {
+            $debugPhoto = substr($input['data'][0]['photo'], 0, 50) . (strlen($input['data'][0]['photo']) > 50 ? '...' : '');
+        }
         // Accepter soit un tableau de data soit directement les données
         $elevesToAdd = isset($input['data']) ? $input['data'] : [$input];
-        
         // Valider que c'est un tableau
         if (!is_array($elevesToAdd)) {
             http_response_code(400);
             echo json_encode(['error' => 'Bad Request', 'message' => 'data must be an array']);
             exit;
         }
-        
         $eleves = readEleves($elevesFile);
         $addedEleves = [];
-        
         foreach ($elevesToAdd as $eleve) {
             // Valider les champs obligatoires
             $requiredFields = ['id', 'nom', 'prenom', 'naissance', 'jour', 'discipline', 'password'];
             $missing = [];
-            
             foreach ($requiredFields as $field) {
                 if (!isset($eleve[$field]) || $eleve[$field] === '') {
                     $missing[] = $field;
                 }
             }
-            
             if (!empty($missing)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Bad Request', 'message' => 'Missing required fields: ' . implode(', ', $missing)]);
                 exit;
             }
-            
             // Ajouter à la liste
             $newEleve = [
                 'id' => $eleve['id'],
@@ -137,14 +137,21 @@ switch ($method) {
                 'password' => $eleve['password'],
                 'createdAt' => $eleve['createdAt'] ?? date('Y-m-d H:i:s')
             ];
-            
             $eleves[] = $newEleve;
             $addedEleves[] = $newEleve;
         }
-        
         saveEleves($elevesFile, $eleves);
-        
-        echo json_encode(['success' => true, 'ok' => true, 'message' => count($addedEleves) . ' élève(s) ajouté(s)', 'eleves' => $addedEleves]);
+        // Réponse enrichie pour debug
+        echo json_encode([
+            'success' => true,
+            'ok' => true,
+            'message' => count($addedEleves) . ' élève(s) ajouté(s)',
+            'eleves' => $addedEleves,
+            'debug' => [
+                'input' => $input,
+                'photo' => $debugPhoto
+            ]
+        ]);
         break;
         
     case 'PUT':
