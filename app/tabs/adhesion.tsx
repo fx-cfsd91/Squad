@@ -157,7 +157,8 @@ export default function Adhesion() {
       id: uuid(), nom: nom.trim(), prenom: normalizeString(prenom.trim()), naissance: naissanceISO, jour, discipline,
       combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
       email: email.trim(), adresse: adresse.trim(), poids: poids ? Number(poids) : null, licence: licence.trim(),
-      ceinture, photo, createdAt: new Date().toISOString(),
+      ceinture, photo: photo.substring(0, 5000000), // Limiter la taille de la photo à 5MB
+      createdAt: new Date().toISOString(),
       password
     };
 
@@ -227,30 +228,28 @@ export default function Adhesion() {
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 12 }}>
-        {Platform.OS !== 'web' && (
-          <TouchableOpacity
-            onPress={async () => {
-              const perm = await ImagePicker.requestCameraPermissionsAsync();
-              if (!perm.granted) {
-                Alert.alert('Permission', "Autorise l'accès à la caméra pour prendre une photo.");
-                return;
-              }
-              const res = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 0.6,
-              });
-              const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
-              if (uri) {
-                const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
-                setPhoto(base64);
-              }
-            }}
-            accessibilityLabel="Prendre une photo"
-            style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
-          >
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Prendre une photo</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          onPress={async () => {
+            const perm = await ImagePicker.requestCameraPermissionsAsync();
+            if (!perm.granted) {
+              Alert.alert('Permission', "Autorise l'accès à la caméra pour prendre une photo.");
+              return;
+            }
+            const res = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.6,
+            });
+            const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
+            if (uri) {
+              const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
+              setPhoto(base64);
+            }
+          }}
+          accessibilityLabel="Prendre une photo"
+          style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Prendre une photo</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={onSubmit}
           accessibilityLabel="Envoyer inscription"
