@@ -18,12 +18,17 @@ export const API_CONFIG = {
   
   // Events
   EVENTS_URL: 'https://cfsd91.com/events.php',
+  EVENTS_JSON_URL: 'https://cfsd91.com/events.json',
   
   // Courses
   COURSES_URL: 'https://cfsd91.com/courses.php',
+  COURSES_JSON_URL: 'https://cfsd91.com/courses.json',
   
   // Notifications/Messages
   PUSH_HISTORY_URL: 'https://cfsd91.com/push_history.php',
+  
+  // Evaluations
+  EVALUATIONS_URL: 'https://cfsd91.com/appli',
 };
 
 // API Headers

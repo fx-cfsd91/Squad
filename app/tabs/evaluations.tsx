@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import HeaderBar from '../../components/header-bar';
-import { BELT_COLORS } from '../../constants/config';
+import { API_CONFIG, BELT_COLORS } from '../../constants/config';
 import { BeltTechnique, EvaluationData } from '../../constants/types';
 
 const BELTS_BY_DISCIPLINE: { [key: string]: string[] } = {
@@ -72,7 +72,7 @@ export default function Evaluations() {
       }
 
       const fileName = `${filePrefix}${fileBelt}.json`;
-      const url = `https://cfsd91.com/appli/${fileName}`;
+      const url = `${API_CONFIG.EVALUATIONS_URL}/${fileName}`;
 
       try {
         const response = await fetch(url);

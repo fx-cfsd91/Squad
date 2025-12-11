@@ -18,6 +18,7 @@ import {
   TextInput,
   View
 } from 'react-native';
+import { API_CONFIG } from '../../constants/config';
 
 dayjs.locale('fr');
 
@@ -85,7 +86,7 @@ export default function Home() {
   
   const loadCoursesData = async () => {
     try {
-      const response = await fetch('https://cfsd91.com/courses.json?t=' + Date.now(), {
+      const response = await fetch(API_CONFIG.COURSES_JSON_URL + '?t=' + Date.now(), {
         method: 'GET',
         cache: 'no-store',
         headers: {
@@ -105,7 +106,7 @@ export default function Home() {
 
   const loadEventsData = async () => {
     try {
-      const response = await fetch('https://cfsd91.com/events.json?t=' + Date.now(), {
+      const response = await fetch(API_CONFIG.EVENTS_JSON_URL + '?t=' + Date.now(), {
         method: 'GET',
         cache: 'no-store',
         headers: {
