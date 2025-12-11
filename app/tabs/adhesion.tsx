@@ -1,32 +1,42 @@
+// CameraType n'est pas une valeur, utiliser Camera.Constants.Type.front
+// app/tabs/adhesion.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-import { API_CONFIG, STORAGE_KEYS, PASSWORD_RULES } from '../../constants/config';
-import { Eleve } from '../../constants/types';
-import { createEleve } from '../../lib/api';
-import { generateUUID, validatePassword, calculateAge, formatDate } from '../../lib/utils';
 // import { CameraConstants } from 'expo-camera';
 
-const UPLOAD_URL = API_CONFIG.ELEVES_APPEND_URL;
+const STORAGE_KEY = 'eleves_cfsd91';
+const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
+const UPLOAD_URL      = 'https://cfsd91.com/eleves.php';
+const TARGET_JSON_NAME = 'eleves.json';
 
-// Phone validation helpers
-const normPhone = (p = '') => (p + '').replace(/\D+/g, '').replace(/^0033/, '0').replace(/^33/, '0');
-const isValidFRPhone = (p = '') => /^0[1-9]\d{8}$/.test(normPhone(p));
+type Eleve = {
+  id:string; nom:string; prenom:string; naissance:string;
+  jour:string; discipline:string; combattant?:boolean; etudiant?:boolean; renouvellement?:boolean;
+  telUrgence?:string; telEleve?:string; email?:string; adresse?:string;
+  poids?: number | null; licence?:string; ceinture?:string; photo?:string;
+  createdAt:string;
+  password: string;
+};
 
-async function loadLocal(): Promise<Eleve[]> {
-  try {
-    const t = await AsyncStorage.getItem(STORAGE_KEYS.ELEVES);
-    return JSON.parse(t || '[]');
-  } catch {
-    return [];
-  }
+const uuid = () =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{
+    const r = (Math.random()*16)|0; const v = c==='x'? r : (r&0x3)|0x8; return v.toString(16);
+  });
+
+const normPhone = (p='') => (p+'').replace(/\D+/g,'').replace(/^0033/,'0').replace(/^33/,'0');
+const isValidFRPhone = (p='') => /^0[1-9]\d{8}$/.test(normPhone(p));
+
+async function loadLocal():Promise<Eleve[]>{
+  try{ const t = await AsyncStorage.getItem(STORAGE_KEY); return JSON.parse(t||'[]'); }catch{ return []; }
 }
 async function saveLocal(list:Eleve[]){ await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
 
@@ -150,6 +160,7 @@ export default function Adhesion() {
     setLoading(true);
     try {
       // Envoi POST au serveur
+      console.log('DEBUG: Envoi données:', JSON.stringify(d));
       const response = await fetch(UPLOAD_URL, {
         method: 'POST',
         headers: {
@@ -158,10 +169,12 @@ export default function Adhesion() {
         },
         body: JSON.stringify({ data: [d] })
       });
+      console.log('DEBUG: Response status:', response.status);
       if (!response.ok) {
         throw new Error(`Erreur serveur: ${response.status}`);
       }
       const res = await response.json();
+      console.log('DEBUG: Réponse serveur:', JSON.stringify(res));
       if (res.success || res.ok) {
         Alert.alert('✅ Élève ajouté', 'L\'inscription a été envoyée au serveur.');
         // reset
@@ -171,7 +184,8 @@ export default function Adhesion() {
         setIsCompetiteur(false);
         setIsEtudiant(false);
         setIsRenouvellement(false);
-        router.push('/');
+        setPassword('');
+        router.back();
       } else {
         // Affiche le contenu brut pour diagnostic
         Alert.alert('Erreur',
@@ -272,25 +286,29 @@ export default function Adhesion() {
             <View style={s.row2}>
               <View style={s.col}>
                 <Text style={s.lbl}>Naissance (JJ/MM/AAAA)</Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                  <View pointerEvents="none">
-                    <TextInput
-                      style={s.inp}
-                      value={naissance}
-                      editable={false}
-                      placeholder="14-05-2012"
-                      placeholderTextColor="#777"
-                    />
-                  </View>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <TextInput
+                    style={[s.inp, { flex: 1 }]}
+                    value={naissance}
+                    editable={true}
+                    onChangeText={setNaissance}
+                    placeholder="14-05-2012"
+                    placeholderTextColor="#777"
+                  />
+                  <TouchableOpacity onPress={() => setShowDatePicker(true)} style={{ padding: 8 }}>
+                    <Ionicons name="calendar-outline" size={22} color="#b40a0a" />
+                  </TouchableOpacity>
+                </View>
                 {showDatePicker && (
                   <DateTimePicker
                     value={dateObj || new Date(2000, 0, 1)}
                     mode="date"
-                    display="default"
+                    display="spinner"
                     maximumDate={new Date()}
                     onChange={(event, selectedDate) => {
-                      setShowDatePicker(false);
+                      if (Platform.OS === 'android') {
+                        setShowDatePicker(false);
+                      }
                       if (selectedDate) {
                         setDateObj(selectedDate);
                         const jj = String(selectedDate.getDate()).padStart(2, '0');
