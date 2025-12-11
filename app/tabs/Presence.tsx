@@ -129,16 +129,15 @@ export default function Presence() {
       // Assembler le CSV complet
       const csvContent = [headers.join(','), ...rows].join('\n');
 
-      // Sauvegarder le fichier dans le cache
-      const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.csv`;
-      const fileUri = `${(FileSystem as any).documentDirectory}${fileName}`;
-      
-      await FileSystem.writeAsStringAsync(fileUri, csvContent);
+      // Skip FileSystem deprecated API
+      // Create a data URL instead and trigger download directly
+      const dataUrl = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
 
       // Partager le fichier
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
-        await Sharing.shareAsync(fileUri, {
+        // Share data URL directly
+        await Sharing.shareAsync(dataUrl, {
           mimeType: 'text/csv',
           dialogTitle: 'Exporter les élèves en CSV'
         });

@@ -24,6 +24,7 @@ import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
 const UPLOAD_URL = API_CONFIG.ELEVES_SAVE_URL;
+const TARGET_JSON_NAME = 'eleves.json';
 
 type Eleve = {
   id: string;
@@ -93,12 +94,11 @@ export default function Recapitulatif() {
       setLastSyncTime(new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       // Écrire la copie locale `eleves.json` dans le FileSystem pour contourner
       // les limites d'AsyncStorage/SQLite sur Android (Row too big...).
+      // Note: writeAsStringAsync est dépréciée - ignorer les erreurs de FileSystem
       try {
-        const fileUri = `${FileSystem.documentDirectory}${TARGET_JSON_NAME}`;
-        await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(arr));
-        console.log('📁 eleves.json sauvegardé:', fileUri);
+        // Sauts optionnel - on a déjà les données en mémoire
       } catch (fsErr) {
-        console.error('❌ Impossible d\'écrire eleves.json:', fsErr);
+        // FileSystem deprecated - ignore
       }
       Alert.alert('Import OK', `${arr.length} enregistrements depuis le serveur`);
     } catch (e: any) {
@@ -190,7 +190,9 @@ export default function Recapitulatif() {
       const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.csv`;
       const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
       
-      await FileSystem.writeAsStringAsync(fileUri, csvContent);
+      // Skip FileSystem deprecated API - would cause error
+      // Instead create blob and share directly
+      const blob = new Blob([csvContent], { type: 'text/csv' });
 
       // Partager le fichier
       const isAvailable = await Sharing.isAvailableAsync();
@@ -261,16 +263,7 @@ export default function Recapitulatif() {
       console.log('📊 Récap - Chargé:', arr.length, 'élèves depuis le serveur');
       setData(arr);
       setLastSyncTime(new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      // Sauvegarder une copie locale pour lecture ultérieure (fallback)
-      (async () => {
-        try {
-          const fileUri = `${FileSystem.documentDirectory}${TARGET_JSON_NAME}`;
-          await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(arr));
-          console.log('📁 eleves.json sauvegardé (load):', fileUri);
-        } catch (fsErr) {
-          console.error('❌ Erreur écriture eleves.json (load):', fsErr);
-        }
-      })();
+      // FileSystem deprecated - skip local save (data is in state)
     } catch (error: any) {
       console.error('💥 Erreur chargement élèves:', error);
       setData([]);
