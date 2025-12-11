@@ -7,11 +7,10 @@ import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
-import { Eleve, Presence } from '../../constants/types';
+import { Eleve, Presence as PresenceType } from '../../constants/types';
 import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
-const PRESENCE_UPLOAD_URL = API_CONFIG.PRESENCE_SAVE_URL;
 
 export default function Presence() {
   const router = useRouter();
