@@ -142,7 +142,7 @@ export default function Presence() {
           dialogTitle: 'Exporter les élèves en CSV'
         });
       } else {
-        Alert.alert('Export CSV', `Fichier sauvegardé: ${fileName}`);
+        Alert.alert('Export CSV', 'Export CSV terminé.');
       }
 
     } catch (error: any) {

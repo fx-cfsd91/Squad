@@ -361,7 +361,7 @@ export default function Recapitulatif() {
                 renderItem={({ item }) => (
                   <TouchableOpacity style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#222' }} onPress={() => {
                     setFileSearchVisible(false);
-                    router.push({ pathname: '/fiche/id', params: { id: String(item.id) } });
+                    router.push(`/tabs/fiche/${item.id}`);
                   }}>
                     <Text style={{ color: '#fff', fontWeight: '700' }}>{item.prenom} {item.nom}</Text>
                     <Text style={{ color: '#9ca3af' }}>{item.email || '—'}</Text>
@@ -440,7 +440,7 @@ export default function Recapitulatif() {
         renderItem={({ item }) => (
           <TouchableOpacity style={s.rowCard} onPress={() => {
             console.log('ID transmis à la fiche:', item.id);
-            router.push({ pathname: '/tabs/fiche/id', params: { id: String(item.id) } });
+            router.push(`/tabs/fiche/${item.id}`);
           }}>
             <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
               {item.photo ? (

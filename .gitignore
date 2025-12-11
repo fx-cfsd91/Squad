@@ -16,3 +16,5 @@ expo-env.d.ts
 backup/
 *.backup
 MonApp_Backup_*/
+.vercel
+.env*.local

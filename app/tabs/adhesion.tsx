@@ -88,9 +88,14 @@ export default function Adhesion() {
         const res = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           quality: 0.6,
+          base64: Platform.OS === 'web', // Demande le base64 directement sur web
         });
         const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
-        if (uri) {
+        // Sur web, on récupère directement le base64
+        if (Platform.OS === 'web') {
+          const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
+          if (base64) setPhoto(base64);
+        } else if (uri) {
           const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
           setPhoto(base64);
         }
@@ -238,9 +243,13 @@ export default function Adhesion() {
             const res = await ImagePicker.launchCameraAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
               quality: 0.6,
+              base64: Platform.OS === 'web',
             });
             const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
-            if (uri) {
+            if (Platform.OS === 'web') {
+              const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
+              if (base64) setPhoto(base64);
+            } else if (uri) {
               const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
               setPhoto(base64);
             }
