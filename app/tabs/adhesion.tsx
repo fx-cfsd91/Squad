@@ -40,7 +40,75 @@ async function loadLocal():Promise<Eleve[]>{
 }
 async function saveLocal(list:Eleve[]){ await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
 
+const INPUT_BG_COLOR = '#f2f2f2';
+const INPUT_TEXT_COLOR = '#000';
+
 export default function Adhesion() {
+            // Correction web: injecter un style global pour forcer la couleur des champs auto-remplis
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      // Vérifier si le style existe déjà
+      if (document.querySelector('[data-style-type="form-styling"]')) {
+        return;
+      }
+      
+      const style = document.createElement('style');
+      style.innerHTML = `
+        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]), textarea {
+          color: ${INPUT_TEXT_COLOR} !important;
+          background-color: ${INPUT_BG_COLOR} !important;
+          caret-color: ${INPUT_TEXT_COLOR} !important;
+        }
+        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):focus, textarea:focus {
+          color: ${INPUT_TEXT_COLOR} !important;
+          background-color: ${INPUT_BG_COLOR} !important;
+          caret-color: ${INPUT_TEXT_COLOR} !important;
+        }
+        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-webkit-autofill, textarea:-webkit-autofill {
+          -webkit-text-fill-color: ${INPUT_TEXT_COLOR} !important;
+          box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
+          background-color: ${INPUT_BG_COLOR} !important;
+          caret-color: ${INPUT_TEXT_COLOR} !important;
+        }
+        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-moz-autofill, textarea:-moz-autofill {
+          box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
+          background-color: ${INPUT_BG_COLOR} !important;
+          color: ${INPUT_TEXT_COLOR} !important;
+          caret-color: ${INPUT_TEXT_COLOR} !important;
+        }
+        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-internal-autofill-selected, textarea:-internal-autofill-selected {
+          background-color: ${INPUT_BG_COLOR} !important;
+          color: ${INPUT_TEXT_COLOR} !important;
+          caret-color: ${INPUT_TEXT_COLOR} !important;
+        }
+        select, select option {
+          color: ${INPUT_TEXT_COLOR} !important;
+          background-color: ${INPUT_BG_COLOR} !important;
+        }
+        select option:checked {
+          background-color: #b40a0aff !important;
+          color: ${INPUT_TEXT_COLOR} !important;
+        }
+        /* Protéger les composants DateTimePicker et modales */
+        .react-native-modal, [role="dialog"], .datetimepicker-modal {
+          background-color: auto !important;
+          color: auto !important;
+        }
+        .react-native-modal *, [role="dialog"] *, .datetimepicker-modal * {
+          background-color: auto !important;
+          color: auto !important;
+        }
+      `;
+      style.setAttribute('data-style-type', 'form-styling');
+      document.head.appendChild(style);
+      return () => { 
+        const existingStyle = document.querySelector('[data-style-type="form-styling"]');
+        if (existingStyle) {
+          document.head.removeChild(existingStyle);
+        }
+      };
+    }
+  }, []);
           // Validation du mot de passe fort
           const [password, setPassword] = useState('');
           const isStrongPassword = (pwd:string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
@@ -430,8 +498,24 @@ const s = StyleSheet.create({
   row2:{ flexDirection:'row', gap:10 },
   col:{ flex:1 },
   lbl:{ color:'#e5e7eb', fontSize:12, marginTop:10, marginBottom:4 },
-  inp:{ borderWidth:1, borderColor:'#64748b', borderRadius:10, paddingHorizontal:12, paddingVertical:10, color:'#fff', backgroundColor:'#18181b', height:44 },
-  picker:{ borderWidth:1, borderColor:'#64748b', borderRadius:10, overflow:'hidden', backgroundColor:'#18181b', height:56, justifyContent:'center' },
+  inp:{
+    borderWidth:1,
+    borderColor:'#64748b',
+    borderRadius:10,
+    paddingHorizontal:12,
+    paddingVertical:10,
+    color: INPUT_TEXT_COLOR,
+    backgroundColor: INPUT_BG_COLOR,
+    height:44,
+    // Correction web: forcer la couleur du texte même en auto-fill/focus
+    ...(Platform.OS === 'web' ? {
+      WebkitTextFillColor: INPUT_TEXT_COLOR,
+      WebkitBoxShadow: `0 0 0px 1000px ${INPUT_BG_COLOR} inset`,
+      boxShadow: `0 0 0px 1000px ${INPUT_BG_COLOR} inset`,
+      caretColor: INPUT_TEXT_COLOR,
+    } : {})
+  },
+  picker:{ borderWidth:1, borderColor:'#64748b', borderRadius:10, overflow:'hidden', backgroundColor: INPUT_BG_COLOR, height:56, justifyContent:'center' },
   btn:{ backgroundColor:'#b40a0aff', paddingVertical:12, paddingHorizontal:12, borderRadius:10 },
   btnTx:{ color:'#fff', fontWeight:'600', fontSize: 14 },
 });
