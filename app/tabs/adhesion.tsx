@@ -224,7 +224,6 @@ export default function Adhesion() {
 
       {/* Boutons rouges sous le bandeau blanc */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 12 }}>
-        <Text style={{ fontSize: 72, fontWeight: 'bold', color: '#b40a0a' }}>TOTO</Text>
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 12 }}>
