@@ -25,7 +25,7 @@ export default function Presence() {
   // Fonction pour lire les fichiers de présence précédents
   const loadOldPresences = async () => {
     try {
-      const raw = await AsyncStorage.getItem(PRESENCE_KEY);
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.PRESENCE);
       if (!raw) return setOldPresences([]);
       let arr = [];
       try {
@@ -46,7 +46,7 @@ export default function Presence() {
       const presentIds = Object.keys(present).filter((id: string) => present[id]);
       const presentEleves = eleves.filter((e: any) => presentIds.includes(e.id));
       const newPresence = { date: new Date().toISOString(), list: presentEleves };
-      const raw = await AsyncStorage.getItem(PRESENCE_KEY);
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.PRESENCE);
       let history = [];
       if (raw) {
         try {
@@ -55,7 +55,7 @@ export default function Presence() {
         } catch { history = []; }
       }
       history.push(newPresence);
-      await AsyncStorage.setItem(PRESENCE_KEY, JSON.stringify(history));
+      await AsyncStorage.setItem(STORAGE_KEYS.PRESENCE, JSON.stringify(history));
       Alert.alert('Présences enregistrées', `${presentEleves.length} élève(s) présent(s) sauvegardé(s).`);
     } catch (e) {
       Alert.alert('Erreur', 'Impossible d’enregistrer les présences.');
@@ -132,7 +132,7 @@ export default function Presence() {
 
       // Sauvegarder le fichier dans le cache
       const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.csv`;
-      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+      const fileUri = `${(FileSystem as any).documentDirectory}${fileName}`;
       
       await FileSystem.writeAsStringAsync(fileUri, csvContent);
 

@@ -12,14 +12,6 @@ export default function Identification() {
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [password, setPassword] = useState('');
-  const [eleves, setEleves] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-  const [nom, setNom] = useState('');
-  const [prenom, setPrenom] = useState('');
-  const [password, setPassword] = useState('');
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -69,8 +61,8 @@ export default function Identification() {
     }
     // Trouver l'élève correspondant
     const eleveFound = eleves.find(e =>
-      normalize(e.nom) === normalize(nom) &&
-      normalize(e.prenom) === normalize(prenom)
+      normalizeString(e.nom) === normalizeString(nom) &&
+      normalizeString(e.prenom) === normalizeString(prenom)
     );
     if (!eleveFound || !eleveFound.password || eleveFound.password !== password) {
       Alert.alert('Erreur', 'Mot de passe incorrect.');
