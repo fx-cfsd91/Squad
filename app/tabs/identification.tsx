@@ -3,16 +3,9 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-
-const ELEVE_URL = 'https://cfsd91.com/eleves.php';
-
-function normalize(str: string) {
-  return str
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/\s+/g, '')
-    .toLowerCase();
-}
+import { STORAGE_KEYS, API_CONFIG } from '../../constants/config';
+import { Eleve } from '../../constants/types';
+import { normalizeString } from '../../lib/utils';
 
 export default function Identification() {
   const router = useRouter();
@@ -24,11 +17,19 @@ export default function Identification() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
+  const [password, setPassword] = useState('');
+  const [eleves, setEleves] = useState<Eleve[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError('');
-        const res = await fetch(ELEVE_URL, {
+        const res = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
           cache: 'no-store',
           headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
         });
@@ -44,8 +45,8 @@ export default function Identification() {
   }, []);
 
   const found = eleves.some(e =>
-    normalize(e.nom) === normalize(nom) &&
-    normalize(e.prenom) === normalize(prenom)
+    normalizeString(e.nom) === normalizeString(nom) &&
+    normalizeString(e.prenom) === normalizeString(prenom)
   );
 
   const handleIdentify = async () => {
@@ -56,12 +57,12 @@ export default function Identification() {
     
     // Trouver l'élève correspondant
     const eleve = eleves.find(e =>
-      normalize(e.nom) === normalize(nom) &&
-      normalize(e.prenom) === normalize(prenom)
+      normalizeString(e.nom) === normalizeString(nom) &&
+      normalizeString(e.prenom) === normalizeString(prenom)
     );
     
     // Sauvegarder l'état d'identification et les données de l'élève
-    await AsyncStorage.setItem('cfsd91_identifie', '1');
+    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleve));
     if (!found) {
       Alert.alert('Erreur', 'Nom ou prénom non reconnu.');
       return;

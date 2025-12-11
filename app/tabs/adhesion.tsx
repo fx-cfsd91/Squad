@@ -1,42 +1,32 @@
-// CameraType n'est pas une valeur, utiliser Camera.Constants.Type.front
-// app/tabs/adhesion.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
-import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
+import { API_CONFIG, STORAGE_KEYS, PASSWORD_RULES } from '../../constants/config';
+import { Eleve } from '../../constants/types';
+import { createEleve } from '../../lib/api';
+import { generateUUID, validatePassword, calculateAge, formatDate } from '../../lib/utils';
 // import { CameraConstants } from 'expo-camera';
 
-const STORAGE_KEY = 'eleves_cfsd91';
-const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
-const UPLOAD_URL      = 'https://cfsd91.com/eleves.php';
-const TARGET_JSON_NAME = 'eleves.json';
+const UPLOAD_URL = API_CONFIG.ELEVES_APPEND_URL;
 
-type Eleve = {
-  id:string; nom:string; prenom:string; naissance:string;
-  jour:string; discipline:string; combattant?:boolean; etudiant?:boolean; renouvellement?:boolean;
-  telUrgence?:string; telEleve?:string; email?:string; adresse?:string;
-  poids?: number | null; licence?:string; ceinture?:string; photo?:string;
-  createdAt:string;
-  password: string;
-};
+// Phone validation helpers
+const normPhone = (p = '') => (p + '').replace(/\D+/g, '').replace(/^0033/, '0').replace(/^33/, '0');
+const isValidFRPhone = (p = '') => /^0[1-9]\d{8}$/.test(normPhone(p));
 
-const uuid = () =>
-  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{
-    const r = (Math.random()*16)|0; const v = c==='x'? r : (r&0x3)|0x8; return v.toString(16);
-  });
-
-const normPhone = (p='') => (p+'').replace(/\D+/g,'').replace(/^0033/,'0').replace(/^33/,'0');
-const isValidFRPhone = (p='') => /^0[1-9]\d{8}$/.test(normPhone(p));
-
-async function loadLocal():Promise<Eleve[]>{
-  try{ const t = await AsyncStorage.getItem(STORAGE_KEY); return JSON.parse(t||'[]'); }catch{ return []; }
+async function loadLocal(): Promise<Eleve[]> {
+  try {
+    const t = await AsyncStorage.getItem(STORAGE_KEYS.ELEVES);
+    return JSON.parse(t || '[]');
+  } catch {
+    return [];
+  }
 }
 async function saveLocal(list:Eleve[]){ await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
 

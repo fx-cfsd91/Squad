@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
+import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
+import { Eleve, Presence } from '../../constants/types';
+import { fetchEleves } from '../../lib/api';
 
-const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
-const STORAGE_KEY = 'eleves_cfsd91';
-const PRESENCE_KEY = 'presences_cfsd91';
-const PRESENCE_UPLOAD_URL = 'https://cfsd91.com/presences_save.php';
+const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
+const PRESENCE_UPLOAD_URL = API_CONFIG.PRESENCE_SAVE_URL;
 
 export default function Presence() {
   const router = useRouter();

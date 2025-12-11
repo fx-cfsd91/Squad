@@ -3,6 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import HeaderBar from '../../components/header-bar';
+import { BELT_COLORS } from '../../constants/config';
+import { BeltTechnique, EvaluationData } from '../../constants/types';
 
 const BELTS_BY_DISCIPLINE: { [key: string]: string[] } = {
   MMA: ['Jaune', 'Orange', 'Verte', 'Bleue', 'Violette', 'Marron', 'Noire I'],

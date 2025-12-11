@@ -14,22 +14,10 @@ import {
     View
 } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-
-type Course = {
-  id: string;
-  title: string; // Intitulé du cours
-  day: number; // 0 = dimanche, 3 = mercredi, 5 = vendredi
-  startTime: string; // Format HH:MM
-  endTime: string; // Format HH:MM
-  details: string;
-  active: boolean;
-  canceledDates: string[]; // Dates annulées au format YYYY-MM-DD
-  createdAt: string;
-  updatedAt?: string;
-};
-
-const API_URL = 'https://cfsd91.com/courses.php';
-const API_KEY = 'Mac131080';
+import { API_CONFIG } from '../../constants/config';
+import { Course } from '../../constants/types';
+import { fetchCourses, createCourse, updateCourse, deleteCourse, manageCourseDate } from '../../lib/api';
+import { generateUUID } from '../../lib/utils';
 
 const DAY_NAMES: { [key: number]: string } = {
   0: 'Dimanche',
@@ -61,21 +49,8 @@ export default function CoursesScreen() {
 
   const loadCourses = async () => {
     try {
-      const response = await fetch(`${API_URL}?t=${Date.now()}`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCourses(data.courses || []);
-      } else {
-        Alert.alert('Erreur', 'Impossible de charger les cours');
-      }
+      const data = await fetchCourses();
+      setCourses(data || []);
     } catch (error) {
       console.error('Erreur chargement cours:', error);
       Alert.alert('Erreur', 'Erreur de connexion au serveur');
@@ -122,9 +97,7 @@ export default function CoursesScreen() {
     }
 
     try {
-      const url = API_URL;
-      const method = editingCourse ? 'PUT' : 'POST';
-      const body: any = {
+      const courseData = {
         title: title.trim(),
         day: selectedDay,
         startTime,
@@ -133,54 +106,28 @@ export default function CoursesScreen() {
       };
 
       if (editingCourse) {
-        body.id = editingCourse.id;
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        setModalVisible(false);
-        loadCourses();
-        Alert.alert('Succès', editingCourse ? 'Cours modifié' : 'Cours ajouté');
+        await updateCourse(editingCourse.id, courseData);
+        Alert.alert('Succès', 'Cours modifié');
       } else {
-        const error = await response.json();
-        Alert.alert('Erreur', error.message || 'Erreur lors de la sauvegarde');
+        await createCourse({ ...courseData, active: true, canceledDates: [] });
+        Alert.alert('Succès', 'Cours ajouté');
       }
+      
+      setModalVisible(false);
+      await loadCourses();
     } catch (error) {
       console.error('Erreur sauvegarde cours:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
     }
   };
 
   const toggleCourseActive = async (course: Course) => {
     try {
-      const response = await fetch(API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          id: course.id,
-          active: !course.active,
-        }),
-      });
-
-      if (response.ok) {
-        loadCourses();
-      } else {
-        Alert.alert('Erreur', 'Impossible de modifier le cours');
-      }
+      await updateCourse(course.id, { active: !course.active });
+      await loadCourses();
     } catch (error) {
       console.error('Erreur toggle cours:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', 'Impossible de modifier le cours');
     }
   };
 
@@ -213,60 +160,28 @@ export default function CoursesScreen() {
     if (!selectedCourseForCancel || !cancelDate) return;
     
     try {
-      const response = await fetch(API_URL, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          id: selectedCourseForCancel.id,
-          date: cancelDate,
-          action: 'cancel',
-        }),
-      });
-
-      if (response.ok) {
-        Alert.alert('Succès', 'Date annulée avec succès');
-        setCancelModalVisible(false);
-        loadCourses();
-      } else {
-        Alert.alert('Erreur', 'Impossible d\'annuler cette date');
-      }
+      await manageCourseDate(selectedCourseForCancel.id, cancelDate, 'cancel');
+      Alert.alert('Succès', 'Date annulée avec succès');
+      setCancelModalVisible(false);
+      await loadCourses();
     } catch (error) {
       console.error('Erreur annulation:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
     }
   };
 
   const uncancelCourseDate = async (course: Course, date: string) => {
     try {
-      const response = await fetch(API_URL, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          id: course.id,
-          date: date,
-          action: 'uncancel',
-        }),
-      });
-
-      if (response.ok) {
-        Alert.alert('Succès', 'Date réactivée avec succès');
-        loadCourses();
-      } else {
-        Alert.alert('Erreur', 'Impossible de réactiver cette date');
-      }
+      await manageCourseDate(course.id, date, 'uncancel');
+      Alert.alert('Succès', 'Date réactivée avec succès');
+      await loadCourses();
     } catch (error) {
       console.error('Erreur réactivation:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
     }
   };
 
-  const deleteCourse = async (course: Course) => {
+  const handleDeleteCourse = async (course: Course) => {
     Alert.alert(
       'Confirmer la suppression',
       `Supprimer le cours du ${DAY_NAMES[course.day]} ?`,
@@ -277,24 +192,12 @@ export default function CoursesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await fetch(API_URL, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-KEY': API_KEY,
-                },
-                body: JSON.stringify({ id: course.id }),
-              });
-
-              if (response.ok) {
-                loadCourses();
-                Alert.alert('Succès', 'Cours supprimé');
-              } else {
-                Alert.alert('Erreur', 'Impossible de supprimer le cours');
-              }
+              await deleteCourse(course.id);
+              await loadCourses();
+              Alert.alert('Succès', 'Cours supprimé');
             } catch (error) {
               console.error('Erreur suppression cours:', error);
-              Alert.alert('Erreur', 'Erreur de connexion au serveur');
+              Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
             }
           },
         },
@@ -437,7 +340,7 @@ export default function CoursesScreen() {
                           <Text style={s.actionBtnText}>Modifier</Text>
                         </Pressable>
                         <Pressable
-                          onPress={() => deleteCourse(course)}
+                          onPress={() => handleDeleteCourse(course)}
                           style={s.actionBtn}
                         >
                           <Ionicons name="trash-outline" size={20} color="#ef4444" />

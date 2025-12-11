@@ -11,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
+import { API_CONFIG } from '../../constants/config';
 
 type Notif = {
   id: string;
@@ -51,8 +52,7 @@ export default function VosMessages() {
   useEffect(() => {
     (async () => {
       try {
-        // ⚡ Adapte l’URL à ton backend (ici un PHP fictif qui renvoie JSON)
-        const res = await fetch('https://cfsd91.com/push_history.php', { cache: 'no-store' });
+        const res = await fetch(API_CONFIG.PUSH_HISTORY_URL, { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const arr = await res.json();
         if (Array.isArray(arr)) {

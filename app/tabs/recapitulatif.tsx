@@ -1,7 +1,6 @@
-// app/tabs/recapitulatif.tsx
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { router, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,11 +18,12 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import HeaderBar from '../../components/header-bar';
+import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
+import { Eleve } from '../../constants/types';
+import { fetchEleves } from '../../lib/api';
 
-const STORAGE_KEY = 'eleves_cfsd91';
-const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
-const UPLOAD_URL      = 'https://cfsd91.com/eleves_save.php';
-const TARGET_JSON_NAME = 'eleves.json';
+const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
+const UPLOAD_URL = API_CONFIG.ELEVES_SAVE_URL;
 
 type Eleve = {
   id: string;

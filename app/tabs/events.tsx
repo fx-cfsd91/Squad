@@ -1,4 +1,3 @@
-// app/tabs/events.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -14,23 +13,10 @@ import {
     View,
 } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-
-type Event = {
-  id: string;
-  title: string;
-  type: 'competition' | 'stage' | 'autre';
-  date: string; // YYYY-MM-DD
-  startTime?: string; // HH:MM
-  endTime?: string; // HH:MM
-  location?: string;
-  description?: string;
-  visible: boolean;
-  createdAt: string;
-  updatedAt?: string;
-};
-
-const API_URL = 'https://cfsd91.com/events.php';
-const API_KEY = 'Mac131080';
+import { API_CONFIG, EVENT_TYPE_COLORS } from '../../constants/config';
+import { Event } from '../../constants/types';
+import { createEvent, fetchEvents, updateEvent, deleteEvent } from '../../lib/api';
+import { formatDate, generateUUID } from '../../lib/utils';
 
 const EVENT_TYPES: { [key: string]: { label: string; color: string } } = {
   competition: { label: 'Compétition', color: '#ef4444' },
@@ -59,21 +45,8 @@ export default function EventsScreen() {
 
   const loadEvents = async () => {
     try {
-      const response = await fetch(`${API_URL}?t=${Date.now()}`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEvents(data.events || []);
-      } else {
-        Alert.alert('Erreur', 'Impossible de charger les événements');
-      }
+      const data = await fetchEvents();
+      setEvents(data || []);
     } catch (error) {
       console.error('Erreur chargement événements:', error);
       Alert.alert('Erreur', 'Erreur de connexion au serveur');
@@ -124,71 +97,44 @@ export default function EventsScreen() {
     }
 
     try {
-      const url = API_URL;
-      const method = editingEvent ? 'PUT' : 'POST';
-      const body: any = {
+      const eventData = {
         title: title.trim(),
-        type: selectedType,
+        type: selectedType as any,
         date,
         startTime: startTime || undefined,
         endTime: endTime || undefined,
         location: location || undefined,
         description: description || undefined,
+        visible: true,
       };
 
       if (editingEvent) {
-        body.id = editingEvent.id;
-      }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        setModalVisible(false);
-        loadEvents();
-        Alert.alert('Succès', editingEvent ? 'Événement modifié' : 'Événement ajouté');
+        await updateEvent(editingEvent.id, eventData);
+        Alert.alert('Succès', 'Événement modifié');
       } else {
-        const error = await response.json();
-        Alert.alert('Erreur', error.message || 'Erreur lors de la sauvegarde');
+        await createEvent(eventData);
+        Alert.alert('Succès', 'Événement ajouté');
       }
+      
+      setModalVisible(false);
+      await loadEvents();
     } catch (error) {
       console.error('Erreur sauvegarde événement:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
     }
   };
 
   const toggleEventVisible = async (event: Event) => {
     try {
-      const response = await fetch(API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          id: event.id,
-          visible: !event.visible,
-        }),
-      });
-
-      if (response.ok) {
-        loadEvents();
-      } else {
-        Alert.alert('Erreur', 'Impossible de modifier l\'événement');
-      }
+      await updateEvent(event.id, { visible: !event.visible });
+      await loadEvents();
     } catch (error) {
       console.error('Erreur toggle événement:', error);
-      Alert.alert('Erreur', 'Erreur de connexion au serveur');
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
     }
   };
 
-  const deleteEvent = async (event: Event) => {
+  const handleDeleteEvent = async (event: Event) => {
     Alert.alert(
       'Confirmer la suppression',
       `Supprimer l'événement "${event.title}" ?`,
@@ -199,24 +145,12 @@ export default function EventsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await fetch(API_URL, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-KEY': API_KEY,
-                },
-                body: JSON.stringify({ id: event.id }),
-              });
-
-              if (response.ok) {
-                loadEvents();
-                Alert.alert('Succès', 'Événement supprimé');
-              } else {
-                Alert.alert('Erreur', 'Impossible de supprimer l\'événement');
-              }
+              await deleteEvent(event.id);
+              await loadEvents();
+              Alert.alert('Succès', 'Événement supprimé');
             } catch (error) {
               console.error('Erreur suppression événement:', error);
-              Alert.alert('Erreur', 'Erreur de connexion au serveur');
+              Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
             }
           },
         },
@@ -362,7 +296,7 @@ export default function EventsScreen() {
                       <Text style={s.actionBtnText}>Modifier</Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => deleteEvent(event)}
+                      onPress={() => handleDeleteEvent(event)}
                       style={s.actionBtn}
                     >
                       <Ionicons name="trash-outline" size={20} color="#ef4444" />

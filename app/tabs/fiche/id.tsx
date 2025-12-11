@@ -3,29 +3,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HeaderBar from '../../../components/header-bar';
-
-const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
-
-type Eleve = {
-	id: string;
-	nom: string;
-	prenom: string;
-	discipline?: string;
-	licence?: string;
-	age?: number;
-	telUrgence?: string;
-	telEleve?: string;
-	email?: string;
-	photo?: string;
-	jour?: string;
-	ceinture?: string;
-	adresse?: string;
-	naissance?: string;
-	poids?: number;
-	combattant?: boolean;
-	etudiant?: boolean;
-	renouvellement?: boolean;
-};
+import { API_CONFIG } from '../../../constants/config';
+import { Eleve } from '../../../constants/types';
+import { fetchEleves } from '../../../lib/api';
 
 const s = StyleSheet.create({
 	scroll: { flex: 1, backgroundColor: '#000' },
@@ -47,18 +27,12 @@ export default function FicheEleve() {
 	const [error, setError] = useState('');
 
 	useEffect(() => {
-		const fetchEleves = async () => {
+		const loadEleve = async () => {
 			setLoading(true);
 			setError('');
 			try {
-				const res = await fetch(REMOTE_JSON_URL, {
-					cache: 'no-store',
-					headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
-				});
-				if (!res.ok) throw new Error('Erreur chargement liste élèves');
-				const data = await res.json();
-				const arr: Eleve[] = Array.isArray(data) ? data : (data?.data || data?.eleves || data?.results || []);
-				const found = arr.find(e => String(e.id) === String(id));
+				const eleves = await fetchEleves();
+				const found = eleves.find(e => String(e.id) === String(id));
 				if (!found) throw new Error('Élève introuvable');
 				setEleve(found);
 			} catch (e: any) {
@@ -68,7 +42,7 @@ export default function FicheEleve() {
 				setLoading(false);
 			}
 		};
-		fetchEleves();
+		loadEleve();
 	}, [id]);
 
 	if (loading) {

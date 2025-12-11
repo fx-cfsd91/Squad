@@ -34,10 +34,14 @@ export interface Eleve {
 
 export interface Course {
   id: string;
-  discipline: Discipline | string;
-  day: DayOfWeek | string;
+  title?: string;
+  discipline?: Discipline | string;
+  day: string | number; // DayOfWeek or number (0-6)
   startTime?: string; // HH:MM
   endTime?: string; // HH:MM
+  details?: string;
+  active?: boolean;
+  canceledDates?: string[]; // YYYY-MM-DD format
   instructor?: string;
   maxStudents?: number;
   createdAt?: string;

@@ -21,6 +21,9 @@ export const API_CONFIG = {
   
   // Courses
   COURSES_URL: 'https://cfsd91.com/courses.php',
+  
+  // Notifications/Messages
+  PUSH_HISTORY_URL: 'https://cfsd91.com/push_history.php',
 };
 
 // API Headers

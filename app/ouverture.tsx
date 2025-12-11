@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
+import { DELAYS } from '../constants/config';
 
 export default function Ouverture() {
   // Static require: Metro will attempt to resolve this at bundle time.
@@ -26,8 +27,8 @@ export default function Ouverture() {
     ]).start();
 
     // schedule exit: start fade-out shortly before navigation
-    const exitDelay = 4500; // ms before starting fade-out
-    const totalDelay = 5000; // ms before navigation
+    const exitDelay = DELAYS.SPLASH_SCREEN; // ms before starting fade-out
+    const totalDelay = DELAYS.SPLASH_SCREEN + 500; // ms before navigation
 
     const exitTimer = setTimeout(() => {
       Animated.parallel([

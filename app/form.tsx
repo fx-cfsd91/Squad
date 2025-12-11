@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { EXTERNAL_URLS } from '../constants/config';
 
 export default function FormScreen() {
   return (
@@ -16,7 +17,7 @@ export default function FormScreen() {
         )}
         javaScriptEnabled
         domStorageEnabled
-        source={{ uri: 'https://cfsd91.com/utilisateur.html' }}
+        source={{ uri: EXTERNAL_URLS.USER_FORM }}
       />
     </View>
   );

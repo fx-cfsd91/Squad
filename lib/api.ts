@@ -154,11 +154,52 @@ export const createEvent = async (event: Omit<Event, 'id' | 'createdAt'>): Promi
 };
 
 /**
+ * Update event
+ */
+export const updateEvent = async (eventId: string, updates: Partial<Event>): Promise<Event> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.EVENTS_URL, {
+      method: 'PUT',
+      body: JSON.stringify({ id: eventId, ...updates }),
+    });
+
+    const data = await response.json();
+    return data as Event;
+  } catch (error) {
+    console.error('Error updating event:', error);
+    throw new Error(`Failed to update event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Delete event
+ */
+export const deleteEvent = async (eventId: string): Promise<void> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.EVENTS_URL, {
+      method: 'DELETE',
+      body: JSON.stringify({ id: eventId }),
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to delete event');
+    }
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    throw new Error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
  * Fetch courses
  */
 export const fetchCourses = async (): Promise<Course[]> => {
   try {
-    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL);
+    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL, {
+      cache: 'no-store',
+    });
     const data = await response.json();
     
     if (!Array.isArray(data)) {
@@ -169,5 +210,86 @@ export const fetchCourses = async (): Promise<Course[]> => {
   } catch (error) {
     console.error('Error fetching courses:', error);
     throw new Error(`Failed to fetch courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Create course
+ */
+export const createCourse = async (course: Omit<Course, 'id' | 'createdAt'>): Promise<Course> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL, {
+      method: 'POST',
+      body: JSON.stringify(course),
+    });
+
+    const data = await response.json();
+    return data as Course;
+  } catch (error) {
+    console.error('Error creating course:', error);
+    throw new Error(`Failed to create course: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Update course
+ */
+export const updateCourse = async (courseId: string, updates: Partial<Course>): Promise<Course> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL, {
+      method: 'PUT',
+      body: JSON.stringify({ id: courseId, ...updates }),
+    });
+
+    const data = await response.json();
+    return data as Course;
+  } catch (error) {
+    console.error('Error updating course:', error);
+    throw new Error(`Failed to update course: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Delete course
+ */
+export const deleteCourse = async (courseId: string): Promise<void> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL, {
+      method: 'DELETE',
+      body: JSON.stringify({ id: courseId }),
+    });
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to delete course');
+    }
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    throw new Error(`Failed to delete course: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Manage course cancelled dates (cancel or uncancel)
+ */
+export const manageCourseDate = async (
+  courseId: string,
+  date: string,
+  action: 'cancel' | 'uncancel'
+): Promise<Course> => {
+  try {
+    const response = await fetchWithTimeout(API_CONFIG.COURSES_URL, {
+      method: 'PATCH',
+      body: JSON.stringify({ id: courseId, date, action }),
+    });
+
+    const data = await response.json();
+    return data as Course;
+  } catch (error) {
+    console.error('Error managing course date:', error);
+    throw new Error(
+      `Failed to ${action} course date: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 };
