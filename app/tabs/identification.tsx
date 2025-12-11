@@ -71,7 +71,7 @@ export default function Identification() {
     // Sauvegarder l'état d'identification et les données de l'élève
     await AsyncStorage.setItem('cfsd91_identifie', '1');
     await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveFound));
-    router.push('/');
+    router.replace('/tabs');
     return (
       <View style={styles.container}>
         <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>{error}</Text>

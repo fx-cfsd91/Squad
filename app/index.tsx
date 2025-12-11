@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,9 +8,17 @@ export default function Index() {
 
   useEffect(() => {
     // Wait a tick to ensure Root Layout is mounted before navigating.
-    const t = setTimeout(() => {
-      // Replace root with ouverture so back button does not return here
-      router.replace('/ouverture');
+    const t = setTimeout(async () => {
+      // Vérifier si l'utilisateur est connecté
+      const isIdentified = await AsyncStorage.getItem('cfsd91_identifie');
+      
+      if (isIdentified === '1') {
+        // Si connecté, aller directement à /tabs
+        router.replace('/tabs');
+      } else {
+        // Sinon, afficher l'écran d'ouverture
+        router.replace('/ouverture');
+      }
     }, 80);
     return () => clearTimeout(t);
   }, [router]);
