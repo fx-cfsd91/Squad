@@ -40,73 +40,67 @@ async function loadLocal():Promise<Eleve[]>{
 }
 async function saveLocal(list:Eleve[]){ await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
 
-const INPUT_BG_COLOR = '#f2f2f2';
-const INPUT_TEXT_COLOR = '#000';
+// Couleurs inverses pour forcer le CSS global sur web
+const INPUT_BG_COLOR = '#ffffff';
+const INPUT_TEXT_COLOR = '#000000';
 
 export default function Adhesion() {
             // Correction web: injecter un style global pour forcer la couleur des champs auto-remplis
   React.useEffect(() => {
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      // Vérifier si le style existe déjà
-      if (document.querySelector('[data-style-type="form-styling"]')) {
-        return;
-      }
+      // Supprimer tout ancien style d'abord
+      const oldStyles = document.querySelectorAll('[data-style-type="form-styling"]');
+      oldStyles.forEach(style => style.remove());
       
       const style = document.createElement('style');
       style.innerHTML = `
-        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]), textarea {
+        * {
+          --input-bg: ${INPUT_BG_COLOR};
+          --input-text: ${INPUT_TEXT_COLOR};
+        }
+        
+        input, textarea, select {
           color: ${INPUT_TEXT_COLOR} !important;
           background-color: ${INPUT_BG_COLOR} !important;
           caret-color: ${INPUT_TEXT_COLOR} !important;
+          border-color: #64748b !important;
         }
-        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):focus, textarea:focus {
+        
+        input:focus, textarea:focus, select:focus {
           color: ${INPUT_TEXT_COLOR} !important;
           background-color: ${INPUT_BG_COLOR} !important;
           caret-color: ${INPUT_TEXT_COLOR} !important;
+          outline: none !important;
         }
-        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-webkit-autofill, textarea:-webkit-autofill {
+        
+        input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
           -webkit-text-fill-color: ${INPUT_TEXT_COLOR} !important;
+          -webkit-box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
           box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
           background-color: ${INPUT_BG_COLOR} !important;
           caret-color: ${INPUT_TEXT_COLOR} !important;
         }
-        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-moz-autofill, textarea:-moz-autofill {
+        
+        input:-webkit-autofill:focus, textarea:-webkit-autofill:focus, select:-webkit-autofill:focus {
+          -webkit-text-fill-color: ${INPUT_TEXT_COLOR} !important;
+          -webkit-box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
           box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
           background-color: ${INPUT_BG_COLOR} !important;
-          color: ${INPUT_TEXT_COLOR} !important;
           caret-color: ${INPUT_TEXT_COLOR} !important;
         }
-        input:not([type="hidden"]):not([type="range"]):not([type="date"]):not([type="time"]):-internal-autofill-selected, textarea:-internal-autofill-selected {
-          background-color: ${INPUT_BG_COLOR} !important;
-          color: ${INPUT_TEXT_COLOR} !important;
-          caret-color: ${INPUT_TEXT_COLOR} !important;
-        }
-        select, select option {
+        
+        select option {
           color: ${INPUT_TEXT_COLOR} !important;
           background-color: ${INPUT_BG_COLOR} !important;
         }
+        
         select option:checked {
           background-color: #b40a0aff !important;
           color: ${INPUT_TEXT_COLOR} !important;
         }
-        /* Protéger les composants DateTimePicker et modales */
-        .react-native-modal, [role="dialog"], .datetimepicker-modal {
-          background-color: auto !important;
-          color: auto !important;
-        }
-        .react-native-modal *, [role="dialog"] *, .datetimepicker-modal * {
-          background-color: auto !important;
-          color: auto !important;
-        }
       `;
       style.setAttribute('data-style-type', 'form-styling');
-      document.head.appendChild(style);
-      return () => { 
-        const existingStyle = document.querySelector('[data-style-type="form-styling"]');
-        if (existingStyle) {
-          document.head.removeChild(existingStyle);
-        }
-      };
+      document.head.insertBefore(style, document.head.firstChild);
     }
   }, []);
           // Validation du mot de passe fort
