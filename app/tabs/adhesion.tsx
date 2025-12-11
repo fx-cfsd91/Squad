@@ -45,64 +45,6 @@ const INPUT_BG_COLOR = '#ffffff';
 const INPUT_TEXT_COLOR = '#000000';
 
 export default function Adhesion() {
-            // Correction web: injecter un style global pour forcer la couleur des champs auto-remplis
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      // Supprimer tout ancien style d'abord
-      const oldStyles = document.querySelectorAll('[data-style-type="form-styling"]');
-      oldStyles.forEach(style => style.remove());
-      
-      const style = document.createElement('style');
-      style.innerHTML = `
-        * {
-          --input-bg: ${INPUT_BG_COLOR};
-          --input-text: ${INPUT_TEXT_COLOR};
-        }
-        
-        input, textarea, select {
-          color: ${INPUT_TEXT_COLOR} !important;
-          background-color: ${INPUT_BG_COLOR} !important;
-          caret-color: ${INPUT_TEXT_COLOR} !important;
-          border-color: #64748b !important;
-        }
-        
-        input:focus, textarea:focus, select:focus {
-          color: ${INPUT_TEXT_COLOR} !important;
-          background-color: ${INPUT_BG_COLOR} !important;
-          caret-color: ${INPUT_TEXT_COLOR} !important;
-          outline: none !important;
-        }
-        
-        input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
-          -webkit-text-fill-color: ${INPUT_TEXT_COLOR} !important;
-          -webkit-box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
-          box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
-          background-color: ${INPUT_BG_COLOR} !important;
-          caret-color: ${INPUT_TEXT_COLOR} !important;
-        }
-        
-        input:-webkit-autofill:focus, textarea:-webkit-autofill:focus, select:-webkit-autofill:focus {
-          -webkit-text-fill-color: ${INPUT_TEXT_COLOR} !important;
-          -webkit-box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
-          box-shadow: 0 0 0px 1000px ${INPUT_BG_COLOR} inset !important;
-          background-color: ${INPUT_BG_COLOR} !important;
-          caret-color: ${INPUT_TEXT_COLOR} !important;
-        }
-        
-        select option {
-          color: ${INPUT_TEXT_COLOR} !important;
-          background-color: ${INPUT_BG_COLOR} !important;
-        }
-        
-        select option:checked {
-          background-color: #b40a0aff !important;
-          color: ${INPUT_TEXT_COLOR} !important;
-        }
-      `;
-      style.setAttribute('data-style-type', 'form-styling');
-      document.head.insertBefore(style, document.head.firstChild);
-    }
-  }, []);
           // Validation du mot de passe fort
           const [password, setPassword] = useState('');
           const isStrongPassword = (pwd:string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
@@ -501,13 +443,6 @@ const s = StyleSheet.create({
     color: INPUT_TEXT_COLOR,
     backgroundColor: INPUT_BG_COLOR,
     height:44,
-    // Correction web: forcer la couleur du texte même en auto-fill/focus
-    ...(Platform.OS === 'web' ? {
-      WebkitTextFillColor: INPUT_TEXT_COLOR,
-      WebkitBoxShadow: `0 0 0px 1000px ${INPUT_BG_COLOR} inset`,
-      boxShadow: `0 0 0px 1000px ${INPUT_BG_COLOR} inset`,
-      caretColor: INPUT_TEXT_COLOR,
-    } : {})
   },
   picker:{ borderWidth:1, borderColor:'#64748b', borderRadius:10, overflow:'hidden', backgroundColor: INPUT_BG_COLOR, height:56, justifyContent:'center' },
   btn:{ backgroundColor:'#b40a0aff', paddingVertical:12, paddingHorizontal:12, borderRadius:10 },
