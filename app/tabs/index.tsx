@@ -86,41 +86,45 @@ export default function Home() {
   
   const loadCoursesData = async () => {
     try {
-      const response = await fetch(API_CONFIG.COURSES_JSON_URL + '?t=' + Date.now(), {
+      const response = await fetch(API_CONFIG.COURSES_URL, {
         method: 'GET',
-        cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
+          'Accept': 'application/json',
+          'X-API-KEY': 'KEYOFSQUAD01@',
         },
       });
       
       if (response.ok) {
         const data = await response.json();
+        console.log('[DEBUG] Courses chargées:', data);
         setCoursesData(data);
+      } else {
+        console.error('[DEBUG] Erreur courses:', response.status);
       }
     } catch (error) {
-      // Erreur de chargement silencieuse
+      console.error('[DEBUG] Erreur fetch courses:', error);
     }
   };
 
   const loadEventsData = async () => {
     try {
-      const response = await fetch(API_CONFIG.EVENTS_JSON_URL + '?t=' + Date.now(), {
+      const response = await fetch(API_CONFIG.EVENTS_URL, {
         method: 'GET',
-        cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
+          'Accept': 'application/json',
+          'X-API-KEY': 'KEYOFSQUAD01@',
         },
       });
       
       if (response.ok) {
         const data = await response.json();
+        console.log('[DEBUG] Events chargés:', data);
         setEventsData(data);
+      } else {
+        console.error('[DEBUG] Erreur events:', response.status);
       }
     } catch (error) {
-      // Erreur de chargement silencieuse
+      console.error('[DEBUG] Erreur fetch events:', error);
     }
   };
 
