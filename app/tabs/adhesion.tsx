@@ -343,7 +343,7 @@ export default function Adhesion() {
               <View style={s.col}>
                 <Text style={s.lbl}>Jour</Text>
                 <View style={s.picker}>
-                  <Picker selectedValue={jour} onValueChange={setJour} dropdownIconColor="#fff" style={{ color:'#fff' }}>
+                  <Picker selectedValue={jour} onValueChange={setJour} dropdownIconColor="#000" style={{ color:'#000' }}>
                     <Picker.Item label="— choisir —" value="" />
                     {jours.map(j=><Picker.Item key={j} label={j} value={j} />)}
                   </Picker>
@@ -355,7 +355,7 @@ export default function Adhesion() {
               <View style={s.col}>
                 <Text style={s.lbl}>Discipline</Text>
                 <View style={s.picker}>
-                  <Picker selectedValue={discipline} onValueChange={setDiscipline} dropdownIconColor="#fff" style={{ color:'#fff' }}>
+                  <Picker selectedValue={discipline} onValueChange={setDiscipline} dropdownIconColor="#000" style={{ color:'#000' }}>
                     <Picker.Item label="— choisir —" value="" />
                     {disciplines.map(d=><Picker.Item key={d} label={d} value={d} />)}
                   </Picker>
@@ -396,7 +396,7 @@ export default function Adhesion() {
 
             <Text style={s.lbl}>Ceinture</Text>
             <View style={s.picker}>
-              <Picker selectedValue={ceinture} onValueChange={setCeinture} dropdownIconColor="#fff" style={{ color:'#fff' }}>
+              <Picker selectedValue={ceinture} onValueChange={setCeinture} dropdownIconColor="#000" style={{ color:'#000' }}>
                 <Picker.Item label="— choisir —" value="" />
                 {ceintures.map(c => <Picker.Item key={c} label={c} value={c} />)}
               </Picker>
