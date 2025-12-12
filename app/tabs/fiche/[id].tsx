@@ -138,6 +138,10 @@ export default function FicheEleve() {
 						<Ionicons name="refresh" size={18} color={eleve.renouvellement ? '#22c55e' : '#aaa'} style={{ marginRight: 8 }} />
 						<Text style={s.mutedSmall}>Renouvellement : {eleve.renouvellement ? 'Oui' : 'Non'}</Text>
 					</View>
+					<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+						<Ionicons name="log-out" size={18} color={eleve.autorisationDepartSeul ? '#22c55e' : '#aaa'} style={{ marginRight: 8 }} />
+						<Text style={s.mutedSmall}>Autorisation de partir seul(e) : {eleve.autorisationDepartSeul ? 'Oui' : 'Non'}</Text>
+					</View>
 				</View>
 			</ScrollView>
 		</View>

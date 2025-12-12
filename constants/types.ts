@@ -19,6 +19,7 @@ export interface Eleve {
   combattant?: boolean;
   etudiant?: boolean;
   renouvellement?: boolean;
+  autorisationDepartSeul?: boolean;
   telUrgence?: string;
   telEleve?: string;
   email?: string;

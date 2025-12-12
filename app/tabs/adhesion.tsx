@@ -21,6 +21,7 @@ const TARGET_JSON_NAME = 'eleves.json';
 type Eleve = {
   id:string; nom:string; prenom:string; naissance:string;
   jour:string; discipline:string; combattant?:boolean; etudiant?:boolean; renouvellement?:boolean;
+  autorisationDepartSeul?:boolean;
   telUrgence?:string; telEleve?:string; email?:string; adresse?:string;
   poids?: number | null; licence?:string; ceinture?:string; photo?:string;
   createdAt:string;
@@ -72,6 +73,7 @@ export default function Adhesion() {
   const [isCompetiteur, setIsCompetiteur] = useState(false);
   const [isEtudiant, setIsEtudiant] = useState(false);
   const [isRenouvellement, setIsRenouvellement] = useState(false);
+  const [isAutorisationDepartSeul, setIsAutorisationDepartSeul] = useState(false);
   
   const [loading,setLoading]=useState(false);
   const [eleves, setEleves] = useState<Eleve[]>([]);
@@ -160,7 +162,7 @@ export default function Adhesion() {
 
     const d:Eleve = {
       id: uuid(), nom: nom.trim(), prenom: normalizeString(prenom.trim()), naissance: naissanceISO, jour, discipline,
-      combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
+      combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, autorisationDepartSeul: isAutorisationDepartSeul, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
       email: email.trim(), adresse: adresse.trim(), poids: poids ? Number(poids) : null, licence: licence.trim(),
       ceinture, photo: photo.substring(0, 5000000), // Limiter la taille de la photo à 5MB
       createdAt: new Date().toISOString(),
@@ -194,6 +196,7 @@ export default function Adhesion() {
         setIsCompetiteur(false);
         setIsEtudiant(false);
         setIsRenouvellement(false);
+        setIsAutorisationDepartSeul(false);
         setPassword('');
         router.back();
       } else {
@@ -420,6 +423,12 @@ export default function Adhesion() {
                   {isRenouvellement && <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>}
                 </View>
                 <Text style={{ color: '#fff', fontSize: 13 }}>Renouvellement</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => setIsAutorisationDepartSeul(v => !v)}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#b40a0aff', backgroundColor: isAutorisationDepartSeul ? '#b40a0aff' : '#18181b', marginRight: 8, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  {isAutorisationDepartSeul && <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>}
+                </View>
+                <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1, flexWrap: 'wrap' }}>Autorisation de partir seul(e) (ne concerne que les mineurs).</Text>
               </TouchableOpacity>
             </View>
 
