@@ -124,11 +124,14 @@ export const fetchEvents = async (): Promise<Event[]> => {
     const response = await fetchWithTimeout(API_CONFIG.EVENTS_URL);
     const data = await response.json();
     
-    if (!Array.isArray(data)) {
+    // Handle both array and object with 'events' property
+    const events = Array.isArray(data) ? data : (data.events || []);
+    
+    if (!Array.isArray(events)) {
       throw new Error('Invalid data format: expected array');
     }
     
-    return data as Event[];
+    return events as Event[];
   } catch (error) {
     console.error('Error fetching events:', error);
     throw new Error(`Failed to fetch events: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -202,11 +205,14 @@ export const fetchCourses = async (): Promise<Course[]> => {
     });
     const data = await response.json();
     
-    if (!Array.isArray(data)) {
+    // Handle both array and object with 'courses' property
+    const courses = Array.isArray(data) ? data : (data.courses || []);
+    
+    if (!Array.isArray(courses)) {
       throw new Error('Invalid data format: expected array');
     }
     
-    return data as Course[];
+    return courses as Course[];
   } catch (error) {
     console.error('Error fetching courses:', error);
     throw new Error(`Failed to fetch courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -242,7 +248,9 @@ export const updateCourse = async (courseId: string, updates: Partial<Course>): 
     });
 
     const data = await response.json();
-    return data as Course;
+    // Server returns { success: true }, so we return a minimal course object
+    // The full update will be fetched by loadCourses()
+    return { id: courseId, ...updates } as Course;
   } catch (error) {
     console.error('Error updating course:', error);
     throw new Error(`Failed to update course: ${error instanceof Error ? error.message : 'Unknown error'}`);

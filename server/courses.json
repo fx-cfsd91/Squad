@@ -1,4 +1,41 @@
 {
-  "courses": [],
-  "lastUpdate": "2025-11-11 12:00:00"
+  "courses": [
+    {
+      "id": "1",
+      "title": "Krav-Maga",
+      "day": 3,
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "details": "Cours de Krav-Maga pour tous niveaux",
+      "cancelledDates": []
+    },
+    {
+      "id": "2",
+      "title": "Krav-Maga",
+      "day": 5,
+      "startTime": "19:00",
+      "endTime": "20:30",
+      "details": "Cours de Krav-Maga pour tous niveaux",
+      "cancelledDates": []
+    },
+    {
+      "id": "3",
+      "title": "MMA",
+      "day": 3,
+      "startTime": "20:45",
+      "endTime": "22:00",
+      "details": "Cours de MMA avancé",
+      "cancelledDates": []
+    },
+    {
+      "id": "4",
+      "title": "Karaté Enfants",
+      "day": 5,
+      "startTime": "17:30",
+      "endTime": "18:30",
+      "details": "Cours de Karaté pour enfants",
+      "cancelledDates": []
+    }
+  ],
+  "lastUpdate": "2025-12-13 12:00:00"
 }

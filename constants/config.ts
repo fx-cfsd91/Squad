@@ -34,7 +34,7 @@ export const API_CONFIG = {
 // API Headers
 export const API_HEADERS = {
   'Content-Type': 'application/json',
-  'X-API-KEY': 'KEYOFSQUAD01@',
+  'X-API-KEY': 'Mac131080',
 };
 
 // Storage Keys
