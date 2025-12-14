@@ -242,11 +242,13 @@ export default function Recapitulatif() {
     try {
       setLoading(true);
       console.log('📊 Récap - Chargement depuis le serveur...');
+      console.log('🔑 Headers envoyés:', API_HEADERS);
       
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'no-store',
         headers: API_HEADERS
       });
+      console.log('📡 Réponse status:', r.status);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       let arrRaw: any = await r.json();
       console.log('Server response loadElevesFromServer type:', typeof arrRaw, Object.keys(arrRaw || {}));

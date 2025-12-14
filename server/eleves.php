@@ -1,51 +1,69 @@
 <?php
-// Augmenter les limites pour les uploads de photos en base64
-ini_set('upload_max_filesize', '50M');
-ini_set('post_max_size', '50M');
-ini_set('memory_limit', '256M');
+// ============================================
+// 🔒 API SÉCURISÉE - AUTHENTIFICATION REQUISE
+// ============================================
 
+ini_set('memory_limit', '512M');
+ini_set('max_execution_time', '60');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
 
-$elevesFile = __DIR__ . '/eleves.json';
-$API_KEY = 'Mac131080';
+$elevesFile = dirname(__DIR__, 2) . '/priv/eleves.json';
+$logsDir = dirname(__DIR__, 2) . '/priv/api_logs';
 
-// Gestion OPTIONS pour CORS
+// ⚠️  CLÉ API SÉCURISÉE - À STOCKER DANS LES VARIABLES D'ENVIRONNEMENT EN PRODUCTION
+$ALLOWED_KEYS = ['Mac131080'];
+
+// Créer le dossier de logs
+@mkdir($logsDir, 0755, true);
+
+// Fonction pour logger les accès API
+function logApiAccess($method, $apiKey, $status, $details = '') {
+    global $logsDir;
+    $logFile = $logsDir . '/access.log';
+    $keyMask = !empty($apiKey) ? substr($apiKey, 0, 3) . '***' . substr($apiKey, -3) : 'NONE';
+    $logEntry = date('Y-m-d H:i:s') . " | $method | Key: $keyMask | Status: $status | IP: {$_SERVER['REMOTE_ADDR']} | $details\n";
+    @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+}
+
+// Fonction pour extraire la clé API
+function getApiKey() {
+    $apiKey = '';
+    
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
+    }
+    
+    if (empty($apiKey)) {
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+    }
+    
+    if (empty($apiKey) && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
+    }
+    
+    return $apiKey;
+}
+
+// Gestion des requêtes OPTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
+$apiKey = getApiKey();
 
-// Vérifier l'authentification pour POST, PUT, DELETE, PATCH
-if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
-    $apiKey = '';
-    
-    // Méthode 1: getallheaders() si disponible
-    if (function_exists('getallheaders')) {
-        $headers = getallheaders();
-        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
-    }
-    
-    // Méthode 2: Via $_SERVER
-    if (empty($apiKey)) {
-        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-    }
-    
-    // Méthode 3: Via apache_request_headers() si disponible
-    if (empty($apiKey) && function_exists('apache_request_headers')) {
-        $headers = apache_request_headers();
-        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
-    }
-    
-    if ($apiKey !== $API_KEY) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid API key']);
-        exit;
-    }
+// ✅ AUTHENTIFICATION REQUISE POUR TOUTES LES REQUÊTES (GET, POST, PUT, DELETE)
+if (!in_array($apiKey, $ALLOWED_KEYS)) {
+    http_response_code(401);
+    logApiAccess($method, $apiKey, 401, 'Unauthorized');
+    echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
+    exit;
 }
 
 // Fonctions helper
@@ -71,20 +89,7 @@ function saveEleves($file, $data) {
 switch ($method) {
     case 'GET':
         // Récupérer tous les élèves - SÉCURISÉ avec authentification
-        $apiKey = '';
-        if (function_exists('getallheaders')) {
-            $headers = getallheaders();
-            $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
-        } else {
-            $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-        }
-        
-        // Vérifier la clé API
-        if ($apiKey !== $API_KEY) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
-            exit;
-        }
+        logApiAccess($method, $apiKey, 200, 'Fetching all students');
         
         // Récupérer les données
         $data = readEleves($elevesFile);
@@ -107,6 +112,7 @@ switch ($method) {
         // Log temporaire pour debug : retour de la donnée reçue et du champ photo
         if (!$input) {
             http_response_code(400);
+            logApiAccess($method, $apiKey, 400, 'Invalid JSON');
             echo json_encode(['error' => 'Bad Request', 'message' => 'Invalid JSON']);
             exit;
         }
@@ -167,6 +173,7 @@ switch ($method) {
             $addedEleves[] = $newEleve;
         }
         saveEleves($elevesFile, $eleves);
+        logApiAccess($method, $apiKey, 201, 'Created ' . count($addedEleves) . ' student(s)');
         // Réponse enrichie pour debug
         echo json_encode([
             'success' => true,
@@ -218,6 +225,7 @@ switch ($method) {
         }
         
         saveEleves($elevesFile, $eleves);
+        logApiAccess($method, $apiKey, 200, 'Updated student: ' . $input['id']);
         echo json_encode(['success' => true, 'message' => 'Eleve updated']);
         break;
         
@@ -245,6 +253,7 @@ switch ($method) {
         }
         
         saveEleves($elevesFile, $eleves);
+        logApiAccess($method, $apiKey, 200, 'Deleted student: ' . $input['id']);
         echo json_encode(['success' => true, 'message' => 'Eleve deleted']);
         break;
         
