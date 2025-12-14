@@ -14,13 +14,19 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
   const timeoutId = setTimeout(() => controller.abort(), DELAYS.API_TIMEOUT);
 
   try {
+    const finalHeaders = { ...API_HEADERS, ...options.headers };
+    console.log('🔑 API_HEADERS sent:', finalHeaders);
+    
     const response = await fetch(url, {
       ...options,
+      method: options.method || 'GET',
+      mode: 'cors',
       signal: controller.signal,
-      headers: { ...API_HEADERS, ...options.headers },
+      headers: finalHeaders,
     });
 
     clearTimeout(timeoutId);
+    console.log('📡 Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -29,6 +35,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
+    console.error('❌ Fetch error:', error);
     throw error;
   }
 };

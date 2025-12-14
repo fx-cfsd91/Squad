@@ -49,9 +49,13 @@ function getApiKey() {
     return $apiKey;
 }
 
-// Gestion des requêtes OPTIONS
+// Gestion des requêtes OPTIONS (CORS preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, X-API-KEY, Authorization');
+    header('Access-Control-Max-Age: 86400');
     exit;
 }
 
@@ -79,10 +83,7 @@ function saveEleves($file, $data) {
     $tempFile = $file . '.tmp';
     file_put_contents($tempFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     rename($tempFile, $file);
-    
-    if (!file_exists($file)) {
-        chmod($file, 0666);
-    }
+    @chmod($file, 0666);
 }
 
 // Routage selon la méthode HTTP
