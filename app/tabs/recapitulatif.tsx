@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import HeaderBar from '../../components/header-bar';
-import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
+import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
 import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
@@ -245,7 +245,7 @@ export default function Recapitulatif() {
       
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'no-store',
-        headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
+        headers: API_HEADERS
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       let arrRaw: any = await r.json();
@@ -263,7 +263,6 @@ export default function Recapitulatif() {
       console.log('📊 Récap - Chargé:', arr.length, 'élèves depuis le serveur');
       setData(arr);
       setLastSyncTime(new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      // FileSystem deprecated - skip local save (data is in state)
     } catch (error: any) {
       console.error('💥 Erreur chargement élèves:', error);
       setData([]);
