@@ -71,11 +71,11 @@ export default function CoursesScreen() {
 
   const openEditModal = (course: Course) => {
     setEditingCourse(course);
-    setTitle(course.title);
-    setSelectedDay(course.day);
-    setStartTime(course.startTime);
-    setEndTime(course.endTime);
-    setDetails(course.details);
+    setTitle(course.title || '');
+    setSelectedDay(typeof course.day === 'number' ? course.day : 3);
+    setStartTime(course.startTime || '');
+    setEndTime(course.endTime || '');
+    setDetails(course.details || '');
     setModalVisible(true);
   };
 
@@ -184,7 +184,7 @@ export default function CoursesScreen() {
   const handleDeleteCourse = async (course: Course) => {
     Alert.alert(
       'Confirmer la suppression',
-      `Supprimer le cours du ${DAY_NAMES[course.day]} ?`,
+      `Supprimer le cours du ${DAY_NAMES[course.day as keyof typeof DAY_NAMES]} ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -250,7 +250,7 @@ export default function CoursesScreen() {
               <View key={day} style={s.daySection}>
                 <Text style={s.dayTitle}>{DAY_NAMES[day]}</Text>
                 {dayCourses
-                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                  .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
                   .map((course) => (
                     <View
                       key={course.id}
@@ -513,7 +513,7 @@ export default function CoursesScreen() {
                     {selectedCourseForCancel.title}
                   </Text>
                   <Text style={s.cancelModalCourseInfo}>
-                    {DAY_NAMES[selectedCourseForCancel.day]} • {selectedCourseForCancel.startTime} - {selectedCourseForCancel.endTime}
+                    {DAY_NAMES[selectedCourseForCancel.day as keyof typeof DAY_NAMES]} • {selectedCourseForCancel.startTime} - {selectedCourseForCancel.endTime}
                   </Text>
 
                   <Text style={s.label}>Prochaines dates</Text>
