@@ -23,7 +23,7 @@ export default function Identification() {
         setError('');
         const res = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
           cache: 'no-store',
-          headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
+          headers: { 'X-API-KEY': 'Mac131080' }
         });
         if (!res.ok) throw new Error('Erreur chargement liste élèves');
         const data = await res.json();

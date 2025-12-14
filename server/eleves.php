@@ -10,7 +10,7 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
 
 $elevesFile = __DIR__ . '/eleves.json';
-$API_KEY = 'KEYOFSQUAD01@';
+$API_KEY = 'Mac131080';
 
 // Gestion OPTIONS pour CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -70,9 +70,35 @@ function saveEleves($file, $data) {
 // Routage selon la méthode HTTP
 switch ($method) {
     case 'GET':
-        // Récupérer tous les élèves
+        // Récupérer tous les élèves - SÉCURISÉ avec authentification
+        $apiKey = '';
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
+        } else {
+            $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+        }
+        
+        // Vérifier la clé API
+        if ($apiKey !== $API_KEY) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
+            exit;
+        }
+        
+        // Récupérer les données
         $data = readEleves($elevesFile);
-        echo json_encode($data);
+        
+        // Filtrer les mots de passe avant de retourner
+        if (is_array($data)) {
+            $filtered = array_map(function($eleve) {
+                unset($eleve['password']);
+                return $eleve;
+            }, $data);
+            echo json_encode($filtered);
+        } else {
+            echo json_encode([]);
+        }
         break;
         
     case 'POST':

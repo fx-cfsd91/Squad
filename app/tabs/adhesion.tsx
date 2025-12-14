@@ -120,7 +120,7 @@ export default function Adhesion() {
 
         // Charger uniquement depuis le serveur IONOS avec clé API
         const response = await fetch(REMOTE_JSON_URL, {
-          headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
+          headers: { 'X-API-KEY': 'Mac131080' }
         });
         if (!response.ok) {
           throw new Error(`Erreur serveur: ${response.status}`);
@@ -177,7 +177,7 @@ export default function Adhesion() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': 'KEYOFSQUAD01@'
+          'X-API-KEY': 'Mac131080'
         },
         body: JSON.stringify({ data: [d] })
       });

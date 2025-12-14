@@ -65,10 +65,10 @@ export default function Home() {
   const [eleveData, setEleveData] = useState<any>(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [coursesData, setCoursesData] = useState<any>(null);
   const [courseDetailsModalVisible, setCourseDetailsModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [eventsData, setEventsData] = useState<any>(null);
+  const [eventsData, setEventsData] = useState<any>({ events: [] });
+  const [coursesData, setCoursesData] = useState<any>({ courses: [] });
 
   useEffect(() => {
     (async () => {
@@ -90,19 +90,23 @@ export default function Home() {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'X-API-KEY': 'KEYOFSQUAD01@',
+          'X-API-KEY': 'Mac131080',
         },
       });
       
       if (response.ok) {
         const data = await response.json();
         console.log('[DEBUG] Courses chargées:', data);
-        setCoursesData(data);
+        // Handle both array and object response format
+        const courses = Array.isArray(data) ? { courses: data } : data;
+        setCoursesData(courses);
       } else {
-        console.error('[DEBUG] Erreur courses:', response.status);
+        console.error('[DEBUG] Erreur courses:', response.status, response.statusText);
+        setCoursesData({ courses: [] });
       }
     } catch (error) {
       console.error('[DEBUG] Erreur fetch courses:', error);
+      setCoursesData({ courses: [] });
     }
   };
 
@@ -112,19 +116,23 @@ export default function Home() {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'X-API-KEY': 'KEYOFSQUAD01@',
+          'X-API-KEY': 'Mac131080',
         },
       });
       
       if (response.ok) {
         const data = await response.json();
         console.log('[DEBUG] Events chargés:', data);
-        setEventsData(data);
+        // Handle both array and object response format
+        const events = Array.isArray(data) ? { events: data } : data;
+        setEventsData(events);
       } else {
-        console.error('[DEBUG] Erreur events:', response.status);
+        console.error('[DEBUG] Erreur events:', response.status, response.statusText);
+        setEventsData({ events: [] });
       }
     } catch (error) {
       console.error('[DEBUG] Erreur fetch events:', error);
+      setEventsData({ events: [] });
     }
   };
 
@@ -386,84 +394,77 @@ export default function Home() {
         </View>
 
         {/* --- Prochains cours et événements (visible pour tous) --- */}
-        {(coursesData && coursesData.courses && coursesData.courses.length > 0) || 
-         (eventsData && eventsData.events && eventsData.events.length > 0 && getNext3Events().length > 0) ? (
-          <View style={s.nextCoursesContainer}>
-            <View style={s.nextCoursesHeader}>
-              <Ionicons name="calendar-outline" size={14} color="#9ca3af" />
-              <Text style={s.nextCoursesTitle}>Prochains cours et événements</Text>
-              <Pressable onPress={() => { loadCoursesData(); loadEventsData(); }} style={{ padding: 2 }}>
-                <Ionicons name="refresh" size={12} color="#64748b" />
+        <View style={s.nextCoursesContainer}>
+          <View style={s.nextCoursesHeader}>
+            <Ionicons name="calendar-outline" size={14} color="#9ca3af" />
+            <Text style={s.nextCoursesTitle}>Prochains cours et événements</Text>
+            <Pressable onPress={() => { loadCoursesData(); loadEventsData(); }} style={{ padding: 2 }}>
+              <Ionicons name="refresh" size={12} color="#64748b" />
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.coursesScroll}>
+            {coursesData && coursesData.courses && getNext3Courses().map((course, index) => (
+              <Pressable key={`course-${index}`} style={s.courseItemCompact} onPress={() => openCourseDetails(course)}>
+                <View style={s.courseCompactHeader}>
+                  <Text style={s.courseDateCompact}>{course.dateFormatted}</Text>
+                  <Text style={s.courseDayCompact}>{course.dayName}</Text>
+                </View>
+                <Text style={s.courseTitleCompact}>{course.title}</Text>
+                <View style={s.courseTimeRowCompact}>
+                  <Ionicons name="time-outline" size={9} color="#64748b" />
+                  <Text style={s.courseTimeCompact}>{course.startTime}</Text>
+                </View>
+                {course.isCanceled && (
+                  <View style={s.canceledBadgeCompact}>
+                    <Text style={s.canceledTextCompact}>Annulé</Text>
+                  </View>
+                )}
               </Pressable>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.coursesScroll}>
-              {/* Cours */}
-              {coursesData && coursesData.courses && getNext3Courses().map((course, index) => (
-                <Pressable key={`course-${index}`} style={s.courseItemCompact} onPress={() => openCourseDetails(course)}>
+            ))}
+            {eventsData && eventsData.events && getNext3Events().map((event: any, index: number) => {
+              const EVENT_COLORS = {
+                competition: '#ef4444',
+                stage: '#f59e0b',
+                autre: '#3b82f6',
+              };
+              const eventColor = EVENT_COLORS[event.type as keyof typeof EVENT_COLORS] || '#3b82f6';
+              return (
+                <Pressable 
+                  key={`event-${index}`} 
+                  style={[s.courseItemCompact, { borderLeftColor: eventColor, borderLeftWidth: 3 }]}
+                  onPress={() => openEventDetails(event)}
+                >
                   <View style={s.courseCompactHeader}>
-                    <Text style={s.courseDateCompact}>{course.dateFormatted}</Text>
-                    <Text style={s.courseDayCompact}>{course.dayName}</Text>
+                    <Text style={s.courseDateCompact}>{event.dateFormatted}</Text>
+                    <Text style={[s.courseDayCompact, { textTransform: 'capitalize' }]}>{event.dayName}</Text>
                   </View>
-                  <Text style={s.courseTitleCompact}>{course.title}</Text>
-                  <View style={s.courseTimeRowCompact}>
-                    <Ionicons name="time-outline" size={9} color="#64748b" />
-                    <Text style={s.courseTimeCompact}>{course.startTime}</Text>
-                  </View>
-                  {course.isCanceled && (
-                    <View style={s.canceledBadgeCompact}>
-                      <Text style={s.canceledTextCompact}>Annulé</Text>
-                    </View>
-                  )}
-                </Pressable>
-              ))}
-              
-              {/* Événements */}
-              {eventsData && eventsData.events && getNext3Events().map((event: any, index: number) => {
-                const EVENT_COLORS = {
-                  competition: '#ef4444',
-                  stage: '#f59e0b',
-                  autre: '#3b82f6',
-                };
-                const eventColor = EVENT_COLORS[event.type as keyof typeof EVENT_COLORS] || '#3b82f6';
-                
-                return (
-                  <Pressable 
-                    key={`event-${index}`} 
-                    style={[s.courseItemCompact, { borderLeftColor: eventColor, borderLeftWidth: 3 }]}
-                    onPress={() => openEventDetails(event)}
-                  >
-                    <View style={s.courseCompactHeader}>
-                      <Text style={s.courseDateCompact}>{event.dateFormatted}</Text>
-                      <Text style={[s.courseDayCompact, { textTransform: 'capitalize' }]}>{event.dayName}</Text>
-                    </View>
-                    <Text style={[s.courseTitleCompact, { color: eventColor, fontWeight: '700' }]}>
-                      {event.title}
-                    </Text>
-                    {event.startTime && (
-                      <View style={s.courseTimeRowCompact}>
-                        <Ionicons name="time-outline" size={9} color="#64748b" />
-                        <Text style={s.courseTimeCompact}>
-                          {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}
-                        </Text>
-                      </View>
-                    )}
-                    {event.location && (
-                      <View style={[s.courseTimeRowCompact, { marginTop: 2 }]}>
-                        <Ionicons name="location-outline" size={9} color="#64748b" />
-                        <Text style={[s.courseTimeCompact, { fontSize: 8 }]}>{event.location}</Text>
-                      </View>
-                    )}
-                    <View style={[s.eventTypeBadge, { backgroundColor: eventColor + '20' }]}>
-                      <Text style={[s.eventTypeText, { color: eventColor }]}>
-                        {event.type === 'competition' ? 'Compétition' : event.type === 'stage' ? 'Stage' : 'Autre'}
+                  <Text style={[s.courseTitleCompact, { color: eventColor, fontWeight: '700' }]}>
+                    {event.title}
+                  </Text>
+                  {event.startTime && (
+                    <View style={s.courseTimeRowCompact}>
+                      <Ionicons name="time-outline" size={9} color="#64748b" />
+                      <Text style={s.courseTimeCompact}>
+                        {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}
                       </Text>
                     </View>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        ) : null}
+                  )}
+                  {event.location && (
+                    <View style={[s.courseTimeRowCompact, { marginTop: 2 }]}>
+                      <Ionicons name="location-outline" size={9} color="#64748b" />
+                      <Text style={[s.courseTimeCompact, { fontSize: 8 }]}>{event.location}</Text>
+                    </View>
+                  )}
+                  <View style={[s.eventTypeBadge, { backgroundColor: eventColor + '20' }]}>
+                    <Text style={[s.eventTypeText, { color: eventColor }]}>
+                      {event.type === 'competition' ? 'Compétition' : event.type === 'stage' ? 'Stage' : 'Autre'}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
 
         {/* --- Tuiles --- */}
         <View style={s.cardsWrap}>

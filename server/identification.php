@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-if ($apiKey !== 'KEYOFSQUAD01@') {
+if ($apiKey !== 'Mac131080') {
     http_response_code(403);
     echo json_encode(['ok'=>false,'error'=>'Clé API invalide']);
     exit;

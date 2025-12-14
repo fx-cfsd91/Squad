@@ -32,9 +32,14 @@ function readCourses($file) {
 function saveCourses($file, $data) {
     $data['lastUpdate'] = date('Y-m-d H:i:s');
     $temp = $file . '.tmp';
-    file_put_contents($temp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    rename($temp, $file);
-    chmod($file, 0644);
+    if (@file_put_contents($temp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX) === false) {
+        throw new Exception('Failed to write temporary file');
+    }
+    if (!@rename($temp, $file)) {
+        @unlink($temp);
+        throw new Exception('Failed to rename file');
+    }
+    @chmod($file, 0600); // ✅ Permissions restrictives
 }
 
 // Vérification de l'authentification pour les méthodes qui modifient
@@ -53,6 +58,16 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
 // Routage selon la méthode HTTP
 switch ($method) {
     case 'GET':
+        // ✅ SÉCURITÉ : Vérifier la clé API pour GET aussi
+        $headers = getallheaders();
+        $apiKey = $headers['X-API-KEY'] ?? $headers['X-Api-Key'] ?? $headers['x-api-key'] ?? '';
+        
+        if ($apiKey !== $SECRET) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
+            exit;
+        }
+        
         // Récupérer tous les cours
         $data = readCourses($coursesFile);
         echo json_encode($data);

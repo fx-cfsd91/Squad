@@ -70,7 +70,7 @@ export default function Presence() {
     try {
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'no-store',
-        headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
+        headers: { 'X-API-KEY': 'Mac131080' }
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const arr = await r.json();
