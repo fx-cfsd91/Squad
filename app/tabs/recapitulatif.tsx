@@ -19,7 +19,6 @@ import {
 import QRCode from 'react-native-qrcode-svg';
 import HeaderBar from '../../components/header-bar';
 import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
-import { Eleve } from '../../constants/types';
 import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
@@ -188,11 +187,12 @@ export default function Recapitulatif() {
 
       // Sauvegarder le fichier dans le cache (compatible avec toutes les versions)
       const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.csv`;
-      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
-      
-      // Skip FileSystem deprecated API - would cause error
-      // Instead create blob and share directly
+
+      // Créer un blob et partager
       const blob = new Blob([csvContent], { type: 'text/csv' });
+      const fileUri = Platform.OS === 'ios'
+        ? `file:///tmp/${fileName}`
+        : `file://${require('react-native').NativeModules.ReactNativeFS?.DocumentDirectoryPath || '/tmp'}/${fileName}`;
 
       // Partager le fichier
       const isAvailable = await Sharing.isAvailableAsync();
@@ -317,32 +317,8 @@ export default function Recapitulatif() {
             style={{ backgroundColor: '#0b0b0b', color: '#fff', padding: 8, borderRadius: 8, marginBottom: 8 }}
           />
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-            <TouchableOpacity style={[s.btn, { flex: 1 }]} onPress={async () => {
-              try {
-                const fileUri = `${FileSystem.documentDirectory}${TARGET_JSON_NAME}`;
-                const info = await FileSystem.getInfoAsync(fileUri);
-                if (!info.exists) {
-                  Alert.alert('Fichier introuvable', 'eleves.json non trouvé dans le stockage local. Chargez les données depuis le serveur d\'abord.');
-                  return;
-                }
-                const content = await FileSystem.readAsStringAsync(fileUri);
-                const arr = JSON.parse(content) as Eleve[];
-                const q = (fileQuery || '').toLowerCase().trim();
-                if (!q) { setFileResults(arr.slice(0, 30)); return; }
-                const tokens = q.split(/\s+/).filter(Boolean);
-                const results = arr.filter(e => {
-                  const full = `${clean(e.prenom)} ${clean(e.nom)}`.toLowerCase();
-                  const email = (clean(e.email) || '').toLowerCase();
-                  // match name tokens
-                  const nameOk = tokens.every(t => full.includes(t));
-                  const emailOk = tokens.every(t => email.includes(t));
-                  return nameOk || emailOk;
-                });
-                setFileResults(results);
-              } catch (err:any) {
-                console.error('Erreur recherche fichier:', err);
-                Alert.alert('Erreur', err?.message || 'Impossible de lire eleves.json');
-              }
+            <TouchableOpacity style={[s.btn, { flex: 1 }]} onPress={() => {
+              Alert.alert('Info', 'Utilisez le champ de recherche principal pour chercher dans les élèves chargés du serveur.');
             }}>
               <Text style={s.btnTx}>Rechercher</Text>
             </TouchableOpacity>
@@ -398,11 +374,7 @@ export default function Recapitulatif() {
         </View>
       </View>
 
-  {loading ? (
-    <View style={{ margin: 12 }}>
-      <ActivityIndicator color="#b40a0a" />
-    </View>
-  ) : null}
+      {loading && <View style={{ margin: 12 }}><ActivityIndicator color="#b40a0a" /></View>}
 
       {/* liste */}
       <FlatList
@@ -478,9 +450,7 @@ export default function Recapitulatif() {
       />
 
       {/* modal QR */}
-      {qrId && (
-        {/* Modal QR retiré */}
-      )}
+      {qrId && null}
       <View style={{ height: 50, backgroundColor: '#000', width: '100%' }} />
     </View>
   );
