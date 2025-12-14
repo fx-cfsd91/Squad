@@ -402,7 +402,7 @@ export default function Home() {
               <Ionicons name="refresh" size={12} color="#64748b" />
             </Pressable>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.coursesScroll}>
+          <View style={s.coursesGrid}>
             {coursesData && coursesData.courses && getNext3Courses().map((course, index) => (
               <Pressable key={`course-${index}`} style={s.courseItemCompact} onPress={() => openCourseDetails(course)}>
                 <View style={s.courseCompactHeader}>
@@ -463,7 +463,7 @@ export default function Home() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         {/* --- Tuiles --- */}
@@ -964,13 +964,19 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     minHeight: 90,
   },
+  coursesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 0,
+  },
   courseItemCompact: {
     backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 8,
-    marginRight: 8,
-    width: Platform.OS === 'web' ? 120 : 70,
-    minWidth: Platform.OS === 'web' ? 120 : 70,
+    marginBottom: 8,
+    width: '32%',
+    minWidth: '32%',
     borderWidth: 1,
     borderColor: '#374151',
   },
