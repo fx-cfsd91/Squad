@@ -28,6 +28,8 @@ export default function EventsScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   
   // Formulaire
@@ -135,27 +137,29 @@ export default function EventsScreen() {
   };
 
   const handleDeleteEvent = async (event: Event) => {
-    Alert.alert(
-      'Confirmer la suppression',
-      `Supprimer l'événement "${event.title}" ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteEvent(event.id);
-              await loadEvents();
-              Alert.alert('Succès', 'Événement supprimé');
-            } catch (error) {
-              console.error('Erreur suppression événement:', error);
-              Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur de connexion au serveur');
-            }
-          },
-        },
-      ]
-    );
+    console.log('🗑️  handleDeleteEvent called with event:', event);
+    setEventToDelete(event);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+    
+    try {
+      console.log('🗑️  Starting delete process for event ID:', eventToDelete.id);
+      await deleteEvent(eventToDelete.id);
+      console.log('✅ Delete successful, reloading events...');
+      await loadEvents();
+      console.log('✅ Events reloaded');
+      setDeleteModalVisible(false);
+      setEventToDelete(null);
+      Alert.alert('Succès', 'Événement supprimé');
+    } catch (error) {
+      console.error('❌ Erreur suppression événement:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur de connexion au serveur';
+      console.error('Error message:', errorMessage);
+      Alert.alert('Erreur', errorMessage);
+    }
   };
 
   // Formater une date pour l'affichage
@@ -439,6 +443,38 @@ export default function EventsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de confirmation de suppression */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={s.deleteModalBackdrop}>
+          <View style={s.deleteModalContent}>
+            <Ionicons name="trash-outline" size={40} color="#ef4444" />
+            <Text style={s.deleteModalTitle}>Confirmer la suppression</Text>
+            <Text style={s.deleteModalText}>
+              Êtes-vous sûr de vouloir supprimer l'événement "{eventToDelete?.title}" ?
+            </Text>
+            <View style={s.deleteModalActions}>
+              <Pressable
+                onPress={() => setDeleteModalVisible(false)}
+                style={[s.deleteModalBtn, s.deleteModalBtnCancel]}
+              >
+                <Text style={s.deleteModalBtnTextCancel}>Annuler</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmDelete}
+                style={[s.deleteModalBtn, s.deleteModalBtnDelete]}
+              >
+                <Text style={s.deleteModalBtnText}>Supprimer</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -591,4 +627,59 @@ const s = StyleSheet.create({
   modalBtnSave: { backgroundColor: '#22c55e' },
   modalBtnTextCancel: { color: '#e5e7eb', fontSize: 16, fontWeight: '600' },
   modalBtnTextSave: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // Delete modal styles
+  deleteModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  deleteModalContent: {
+    backgroundColor: '#1a1f2e',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    minWidth: '80%',
+  },
+  deleteModalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  deleteModalText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  deleteModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  deleteModalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteModalBtnCancel: {
+    backgroundColor: '#374151',
+  },
+  deleteModalBtnDelete: {
+    backgroundColor: '#ef4444',
+  },
+  deleteModalBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteModalBtnTextCancel: {
+    color: '#e5e7eb',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
