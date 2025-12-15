@@ -186,18 +186,21 @@ export const updateEvent = async (eventId: string, updates: Partial<Event>): Pro
  */
 export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
+    console.log('🗑️  Attempting to delete event:', eventId);
     const response = await fetchWithTimeout(API_CONFIG.EVENTS_URL, {
       method: 'DELETE',
       body: JSON.stringify({ id: eventId }),
     });
 
+    console.log('📡 Delete response status:', response.status);
     const data = await response.json();
+    console.log('✅ Delete response data:', data);
     
     if (!data.success) {
       throw new Error(data.message || 'Failed to delete event');
     }
   } catch (error) {
-    console.error('Error deleting event:', error);
+    console.error('❌ Error deleting event:', error);
     throw new Error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
