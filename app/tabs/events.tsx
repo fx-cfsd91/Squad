@@ -451,8 +451,14 @@ export default function EventsScreen() {
         animationType="fade"
         onRequestClose={() => setDeleteModalVisible(false)}
       >
-        <View style={s.deleteModalBackdrop}>
-          <View style={s.deleteModalContent}>
+        <Pressable 
+          style={s.deleteModalBackdrop}
+          onPress={() => setDeleteModalVisible(false)}
+        >
+          <Pressable 
+            onPress={(e) => e.stopPropagation()}
+            style={s.deleteModalContent}
+          >
             <Ionicons name="trash-outline" size={40} color="#ef4444" />
             <Text style={s.deleteModalTitle}>Confirmer la suppression</Text>
             <Text style={s.deleteModalText}>
@@ -472,8 +478,8 @@ export default function EventsScreen() {
                 <Text style={s.deleteModalBtnText}>Supprimer</Text>
               </Pressable>
             </View>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -634,6 +640,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    pointerEvents: 'auto',
   },
   deleteModalContent: {
     backgroundColor: '#1a1f2e',
