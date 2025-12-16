@@ -8,6 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
+  Image,
   ImageBackground,
   Modal,
   Platform,
@@ -406,6 +407,29 @@ export default function Home() {
           </View>
         </View>
 
+        {/* --- Profil utilisateur identifié --- */}
+        {identifie && eleveData && (
+          <View style={s.profileSection}>
+            <View style={s.profileContent}>
+              {eleveData.photo && (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${eleveData.photo.substring(0, 100)}...` }}
+                  style={s.profilePhoto}
+                />
+              )}
+              {!eleveData.photo && (
+                <View style={[s.profilePhoto, { backgroundColor: '#1f2937', justifyContent: 'center', alignItems: 'center' }]}>
+                  <Ionicons name="person" size={40} color="#9ca3af" />
+                </View>
+              )}
+              <View style={s.profileInfo}>
+                <Text style={s.profileName}>{eleveData.prenom} {eleveData.nom}</Text>
+                <Text style={s.profileSubtitle}>{eleveData.discipline || 'Discipline'}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* --- Indicateur de mode --- */}
         <View style={s.modeIndicator}>
           <Ionicons name={currentMode.icon as any} size={16} color={currentMode.color} />
@@ -788,6 +812,40 @@ const s = StyleSheet.create({
     minWidth: 0,
   },
   
+  profileSection: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 8,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    padding: 12,
+  },
+  profileContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profilePhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1f2937',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  profileSubtitle: {
+    color: '#9ca3af',
+    fontSize: 12,
+    marginTop: 2,
+  },
   modeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
