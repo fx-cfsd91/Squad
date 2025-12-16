@@ -235,7 +235,7 @@ export default function Adhesion() {
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 12 }}>
       </View>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 12 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, marginBottom: 8, gap: 6, paddingHorizontal: 12 }}>
         <TouchableOpacity
           onPress={async () => {
             const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -258,9 +258,9 @@ export default function Adhesion() {
             }
           }}
           accessibilityLabel="Prendre une photo"
-          style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
+          style={{ flex: 1, backgroundColor: '#b40a0a', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 8, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Prendre une photo</Text>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Prendre une photo</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={async () => {
@@ -284,16 +284,16 @@ export default function Adhesion() {
             }
           }}
           accessibilityLabel="Choisir une photo de la galerie"
-          style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
+          style={{ flex: 1, backgroundColor: '#b40a0a', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 8, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Choisir une photo</Text>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Choisir une photo</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onSubmit}
           accessibilityLabel="Envoyer inscription"
-          style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
+          style={{ flex: 1, backgroundColor: '#b40a0a', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 8, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Envoyer</Text>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Envoyer</Text>
         </TouchableOpacity>
       </View>
 
