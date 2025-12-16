@@ -407,33 +407,26 @@ export default function Home() {
           </View>
         </View>
 
-        {/* --- Profil utilisateur identifié --- */}
-        {identifie && eleveData && (
-          <View style={s.profileSection}>
-            <View style={s.profileContent}>
-              {eleveData.photo && (
-                <Image
-                  source={{ uri: `data:image/jpeg;base64,${eleveData.photo.substring(0, 100)}...` }}
-                  style={s.profilePhoto}
-                />
-              )}
-              {!eleveData.photo && (
-                <View style={[s.profilePhoto, { backgroundColor: '#1f2937', justifyContent: 'center', alignItems: 'center' }]}>
-                  <Ionicons name="person" size={40} color="#9ca3af" />
-                </View>
-              )}
-              <View style={s.profileInfo}>
-                <Text style={s.profileName}>{eleveData.prenom} {eleveData.nom}</Text>
-                <Text style={s.profileSubtitle}>{eleveData.discipline || 'Discipline'}</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* --- Indicateur de mode --- */}
+        {/* --- Indicateur de mode avec profil --- */}
         <View style={s.modeIndicator}>
           <Ionicons name={currentMode.icon as any} size={16} color={currentMode.color} />
           <Text style={[s.modeText, { color: currentMode.color }]}>{currentMode.text}</Text>
+          
+          {identifie && eleveData && (
+            <View style={s.profilePhotoInMode}>
+              {eleveData.photo && (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${eleveData.photo}` }}
+                  style={s.profilePhotoSmall}
+                />
+              )}
+              {!eleveData.photo && (
+                <View style={[s.profilePhotoSmall, { backgroundColor: '#1f2937', justifyContent: 'center', alignItems: 'center' }]}>
+                  <Ionicons name="person" size={20} color="#9ca3af" />
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* --- Prochains cours et événements (visible pour tous) --- */}
@@ -812,30 +805,6 @@ const s = StyleSheet.create({
     minWidth: 0,
   },
   
-  profileSection: {
-    marginHorizontal: 12,
-    marginTop: 12,
-    marginBottom: 8,
-    backgroundColor: '#0a0a0a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    padding: 12,
-  },
-  profileContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  profilePhoto: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#1f2937',
-  },
-  profileInfo: {
-    flex: 1,
-  },
   profileName: {
     color: '#fff',
     fontSize: 16,
@@ -849,7 +818,7 @@ const s = StyleSheet.create({
   modeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginHorizontal: 12,
@@ -859,6 +828,15 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1f2937',
     gap: 8,
+  },
+  profilePhotoInMode: {
+    marginLeft: 'auto',
+  },
+  profilePhotoSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1f2937',
   },
   modeText: {
     fontSize: 14,
