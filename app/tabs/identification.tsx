@@ -42,41 +42,53 @@ export default function Identification() {
   );
 
   const handleIdentify = async () => {
-    if (!found) {
-      Alert.alert('Erreur', 'Nom ou prénom non reconnu.');
-      return;
+    try {
+      setLoading(true);
+      
+      if (!nom || !prenom) {
+        Alert.alert('Erreur', 'Veuillez entrer votre nom et prénom');
+        setLoading(false);
+        return;
+      }
+
+      // Trouver l'élève correspondant
+      const eleve = eleves.find(e =>
+        normalizeString(e.nom) === normalizeString(nom) &&
+        normalizeString(e.prenom) === normalizeString(prenom)
+      );
+
+      if (!eleve) {
+        Alert.alert('Erreur', 'Nom ou prénom non reconnu.');
+        setLoading(false);
+        return;
+      }
+
+      // Vérifier le mot de passe
+      if (!password) {
+        Alert.alert('Erreur', 'Veuillez entrer votre mot de passe');
+        setLoading(false);
+        return;
+      }
+
+      if (eleve.password !== password) {
+        Alert.alert('Erreur', 'Mot de passe incorrect.');
+        setLoading(false);
+        return;
+      }
+
+      // Sauvegarder l'état d'identification et les données de l'élève
+      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleve));
+      await AsyncStorage.setItem('cfsd91_identifie', '1');
+      await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleve));
+      
+      Alert.alert('Succès', `Bienvenue ${eleve.prenom}!`);
+      router.replace('/tabs');
+    } catch (error) {
+      console.error('Erreur identification:', error);
+      Alert.alert('Erreur', 'Erreur lors de l\'identification');
+    } finally {
+      setLoading(false);
     }
-    
-    // Trouver l'élève correspondant
-    const eleve = eleves.find(e =>
-      normalizeString(e.nom) === normalizeString(nom) &&
-      normalizeString(e.prenom) === normalizeString(prenom)
-    );
-    
-    // Sauvegarder l'état d'identification et les données de l'élève
-    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleve));
-    if (!found) {
-      Alert.alert('Erreur', 'Nom ou prénom non reconnu.');
-      return;
-    }
-    // Trouver l'élève correspondant
-    const eleveFound = eleves.find(e =>
-      normalizeString(e.nom) === normalizeString(nom) &&
-      normalizeString(e.prenom) === normalizeString(prenom)
-    );
-    if (!eleveFound || !eleveFound.password || eleveFound.password !== password) {
-      Alert.alert('Erreur', 'Mot de passe incorrect.');
-      return;
-    }
-    // Sauvegarder l'état d'identification et les données de l'élève
-    await AsyncStorage.setItem('cfsd91_identifie', '1');
-    await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveFound));
-    router.replace('/tabs');
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>{error}</Text>
-      </View>
-    );
   }
 
   return (
