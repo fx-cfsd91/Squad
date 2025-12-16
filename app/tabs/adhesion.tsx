@@ -263,6 +263,32 @@ export default function Adhesion() {
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Prendre une photo</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          onPress={async () => {
+            const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!perm.granted) {
+              Alert.alert('Permission', "Autorise l'accès à la galerie pour sélectionner une photo.");
+              return;
+            }
+            const res = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              quality: 0.6,
+              base64: Platform.OS === 'web',
+            });
+            const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
+            if (Platform.OS === 'web') {
+              const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
+              if (base64) setPhoto(base64);
+            } else if (uri) {
+              const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
+              setPhoto(base64);
+            }
+          }}
+          accessibilityLabel="Choisir une photo de la galerie"
+          style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Choisir une photo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={onSubmit}
           accessibilityLabel="Envoyer inscription"
           style={{ backgroundColor: '#b40a0a', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 10 }}
