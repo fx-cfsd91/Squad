@@ -142,16 +142,16 @@ export default function Adhesion() {
   }, []);
   
   const onSubmit = async()=>{
-    if(!nom.trim()||!prenom.trim()||!naissance||!jour||!discipline){
-      Alert.alert('Champs obligatoires','Renseigne Nom, Prénom, Date, Jour, Discipline.'); return;
+    if(!nom.trim()||!prenom.trim()||!naissance||!jour||!discipline||!telUrgence.trim()){
+      Alert.alert('Champs obligatoires','Renseigne Nom, Prénom, Date, Jour, Discipline, Tél. d\'urgence.'); return;
     }
     if(!isStrongPassword(password)){
       Alert.alert('Mot de passe','Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'); return;
     }
-    if(telUrgence && !isValidFRPhone(telUrgence)) return Alert.alert('Erreur',"Téléphone d'urgence invalide (FR).");
+    if(!isValidFRPhone(telUrgence)) return Alert.alert('Erreur',"Téléphone d'urgence invalide (FR).");
     if(telEleve && !isValidFRPhone(telEleve)) return Alert.alert('Erreur','Téléphone élève invalide (FR).');
-    if(telUrgence && telEleve && normPhone(telUrgence)===normPhone(telEleve))
-      return Alert.alert('Erreur',"Le téléphone élève doit être différent de l'urgence.");
+    if(telEleve && normPhone(telUrgence)===normPhone(telEleve))
+      return Alert.alert('Erreur',"Le téléphone élève doit être différent de l'urgence");
 
     // Conversion date naissance JJ-MM-AAAA -> ISO AAAA-MM-JJ
     let naissanceISO = naissance;
@@ -281,16 +281,16 @@ export default function Adhesion() {
             {/* Champs Nom et Prénom */}
             <View style={s.row2}>
               <View style={s.col}>
-                <Text style={s.lbl}>Nom</Text>
+                <Text style={s.lbl}>Nom <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <TextInput style={s.inp} value={nom} onChangeText={setNom} placeholder="Nom" placeholderTextColor="#777" />
               </View>
               <View style={s.col}>
-                <Text style={s.lbl}>Prénom</Text>
+                <Text style={s.lbl}>Prénom <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <TextInput style={s.inp} value={prenom} onChangeText={setPrenom} placeholder="Prénom" placeholderTextColor="#777" />
               </View>
             </View>
             {/* Mot de passe sous Nom/Prénom */}
-            <Text style={s.lbl}>Mot de passe</Text>
+            <Text style={s.lbl}>Mot de passe <Text style={{color:'#ef4444'}}>*</Text></Text>
             <TextInput
               style={s.inp}
               value={password}
@@ -305,7 +305,7 @@ export default function Adhesion() {
 
             <View style={s.row2}>
               <View style={s.col}>
-                <Text style={s.lbl}>Naissance (JJ/MM/AAAA)</Text>
+                <Text style={s.lbl}>Naissance (JJ/MM/AAAA) <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <TextInput
                     style={[s.inp, { flex: 1 }]}
@@ -341,7 +341,7 @@ export default function Adhesion() {
                 )}
               </View>
               <View style={s.col}>
-                <Text style={s.lbl}>Jour</Text>
+                <Text style={s.lbl}>Jour <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <View style={s.picker}>
                   <Picker selectedValue={jour} onValueChange={setJour} dropdownIconColor="#000" style={{ color:'#000' }}>
                     <Picker.Item label="— choisir —" value="" />
@@ -353,7 +353,7 @@ export default function Adhesion() {
 
             <View style={s.row2}>
               <View style={s.col}>
-                <Text style={s.lbl}>Discipline</Text>
+                <Text style={s.lbl}>Discipline <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <View style={s.picker}>
                   <Picker selectedValue={discipline} onValueChange={setDiscipline} dropdownIconColor="#000" style={{ color:'#000' }}>
                     <Picker.Item label="— choisir —" value="" />
@@ -362,7 +362,7 @@ export default function Adhesion() {
                 </View>
               </View>
               <View style={s.col}>
-                <Text style={s.lbl}>Tél. d’urgence *</Text>
+                <Text style={s.lbl}>Tél. d'urgence <Text style={{color:'#ef4444'}}>*</Text></Text>
                 <TextInput style={s.inp} value={telUrgence} onChangeText={setTelUrgence} placeholder="06 12 34 56 78" placeholderTextColor="#777" inputMode="tel" />
               </View>
             </View>
