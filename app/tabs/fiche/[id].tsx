@@ -51,6 +51,7 @@ export default function FicheEleve() {
 					telEleve: found.telEleve || '',
 					email: found.email || '',
 					adresse: found.adresse || '',
+					licence: found.licence || '',
 				});
 			} catch (e: any) {
 				setError(e?.message || 'Erreur chargement fiche');
@@ -100,6 +101,7 @@ export default function FicheEleve() {
 				telEleve: editData.telEleve,
 				email: editData.email,
 				adresse: editData.adresse,
+				licence: editData.licence,
 			};
 
 			const response = await fetch('https://cfsd91.com/eleves.php', {
@@ -219,6 +221,15 @@ export default function FicheEleve() {
 							placeholder="Rue, Code Postal, Ville"
 							placeholderTextColor="#666"
 							multiline
+						/>
+
+						<Text style={{ color: '#fff', fontWeight: '600', marginBottom: 4 }}>Numéro de licence</Text>
+						<TextInput
+							style={s.input}
+							value={editData.licence}
+							onChangeText={(text) => setEditData({ ...editData, licence: text })}
+							placeholder="Numéro de licence"
+							placeholderTextColor="#666"
 						/>
 
 						<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
