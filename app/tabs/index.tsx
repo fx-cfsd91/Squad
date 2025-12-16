@@ -384,7 +384,7 @@ export default function Home() {
         <View style={s.topbar}>
           <View>
             <Text style={s.headerTitle}>Accueil</Text>
-            <Text style={{color:'#999',fontSize:10,marginTop:2}}>Version V1.1 webapp</Text>
+            <Text style={{color:'#999',fontSize:10,marginTop:2}}>Version V2.0 webapp</Text>
           </View>
           <View style={s.topRight}>
             <Pressable style={s.iconBtn} onPress={toggleAdmin}>
@@ -413,7 +413,14 @@ export default function Home() {
           <Text style={[s.modeText, { color: currentMode.color }]}>{currentMode.text}</Text>
           
           {identifie && eleveData && (
-            <View style={s.profilePhotoInMode}>
+            <Pressable 
+              style={s.profilePhotoInMode}
+              onPress={() => {
+                if (eleveData.id) {
+                  router.push(`/tabs/fiche/${eleveData.id}`);
+                }
+              }}
+            >
               {eleveData.photo && (
                 <Image
                   source={{ uri: `data:image/jpeg;base64,${eleveData.photo}` }}
@@ -425,7 +432,7 @@ export default function Home() {
                   <Ionicons name="person" size={20} color="#9ca3af" />
                 </View>
               )}
-            </View>
+            </Pressable>
           )}
         </View>
 

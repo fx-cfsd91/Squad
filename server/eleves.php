@@ -10,6 +10,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
 
+// Déterminer le chemin du fichier eleves.json
+// __DIR__ = /home/u285984816/public_html/cfsd91/server
+// dirname(__DIR__, 2) = /home/u285984816/public_html
 $elevesFile = dirname(__DIR__, 2) . '/priv/eleves.json';
 $logsDir = dirname(__DIR__, 2) . '/priv/api_logs';
 
@@ -80,10 +83,27 @@ function readEleves($file) {
 }
 
 function saveEleves($file, $data) {
+    $dir = dirname($file);
+    // Créer le répertoire s'il n'existe pas
+    @mkdir($dir, 0755, true);
+    
     $tempFile = $file . '.tmp';
-    file_put_contents($tempFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    rename($tempFile, $file);
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    
+    // Écrire dans le fichier temporaire
+    if (file_put_contents($tempFile, $json) === false) {
+        return false;
+    }
+    
+    // Renommer le fichier temporaire
+    if (rename($tempFile, $file) === false) {
+        @unlink($tempFile);
+        return false;
+    }
+    
+    // Définir les permissions
     @chmod($file, 0666);
+    return true;
 }
 
 // Routage selon la méthode HTTP
@@ -198,7 +218,22 @@ switch ($method) {
             exit;
         }
         
+        // Vérifier si le fichier existe
+        if (!file_exists($elevesFile)) {
+            http_response_code(500);
+            logApiAccess($method, $apiKey, 500, "File not found: $elevesFile");
+            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves file not found', 'path' => $elevesFile, 'exists' => file_exists($elevesFile)]);
+            exit;
+        }
+        
         $eleves = readEleves($elevesFile);
+        if (empty($eleves)) {
+            http_response_code(500);
+            logApiAccess($method, $apiKey, 500, "Eleves data is empty from: $elevesFile");
+            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves data is empty', 'path' => $elevesFile]);
+            exit;
+        }
+        
         $eleveFound = false;
         
         foreach ($eleves as &$eleve) {
@@ -221,13 +256,21 @@ switch ($method) {
         
         if (!$eleveFound) {
             http_response_code(404);
-            echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found']);
+            logApiAccess($method, $apiKey, 404, "Student not found: {$input['id']}");
+            echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found', 'searchId' => $input['id']]);
             exit;
         }
         
-        saveEleves($elevesFile, $eleves);
+        // Sauvegarder les modifications
+        if (!saveEleves($elevesFile, $eleves)) {
+            http_response_code(500);
+            logApiAccess($method, $apiKey, 500, "Failed to save eleves to: $elevesFile");
+            echo json_encode(['error' => 'Server Error', 'message' => 'Failed to save changes', 'path' => $elevesFile]);
+            exit;
+        }
+        
         logApiAccess($method, $apiKey, 200, 'Updated student: ' . $input['id']);
-        echo json_encode(['success' => true, 'message' => 'Eleve updated']);
+        echo json_encode(['success' => true, 'message' => 'Eleve updated successfully']);
         break;
         
     case 'DELETE':
