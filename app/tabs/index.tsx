@@ -83,6 +83,25 @@ export default function Home() {
       loadEventsData();
     })();
   }, []);
+
+  // Recharger l'état d'identification quand la page reprend le focus
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const id = await AsyncStorage.getItem(KEY_IDENTIFIE);
+        const eleveId = await AsyncStorage.getItem('cfsd91_eleve_data');
+        setIdentifie(id === '1');
+        if (eleveId) {
+          try {
+            setEleveData(JSON.parse(eleveId));
+            console.log('✅ Élève identifié:', JSON.parse(eleveId)?.prenom);
+          } catch (e) {
+            console.error('Erreur parsing élève:', e);
+          }
+        }
+      })();
+    }, [])
+  );
   
   const loadCoursesData = async () => {
     try {

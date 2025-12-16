@@ -21,15 +21,21 @@ export default function Identification() {
       try {
         setLoading(true);
         setError('');
+        console.log('📥 Chargement des élèves...');
         const res = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
           cache: 'no-store',
           headers: { 'X-API-KEY': 'Mac131080' }
         });
-        if (!res.ok) throw new Error('Erreur chargement liste élèves');
+        console.log('📡 Response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`Erreur HTTP ${res.status}: ${res.statusText}`);
+        }
         const data = await res.json();
+        console.log('✅ Données reçues:', Array.isArray(data) ? `${data.length} élèves` : 'Format invalide');
         setEleves(Array.isArray(data) ? data : []);
       } catch (e: any) {
-        setError('Impossible de charger la liste des élèves');
+        console.error('❌ Erreur chargement élèves:', e);
+        setError('Impossible de charger la liste des élèves: ' + e.message);
       } finally {
         setLoading(false);
       }
@@ -43,6 +49,9 @@ export default function Identification() {
 
   const handleIdentify = async () => {
     try {
+      console.log('🔑 Tentative d\'authentification...');
+      console.log('Nom:', nom, 'Prénom:', prenom);
+      
       setLoading(true);
       
       if (!nom || !prenom) {
@@ -51,31 +60,40 @@ export default function Identification() {
         return;
       }
 
-      // Trouver l'élève correspondant
-      const eleve = eleves.find(e =>
-        normalizeString(e.nom) === normalizeString(nom) &&
-        normalizeString(e.prenom) === normalizeString(prenom)
-      );
-
-      if (!eleve) {
-        Alert.alert('Erreur', 'Nom ou prénom non reconnu.');
-        setLoading(false);
-        return;
-      }
-
-      // Vérifier le mot de passe
       if (!password) {
         Alert.alert('Erreur', 'Veuillez entrer votre mot de passe');
         setLoading(false);
         return;
       }
 
-      if (eleve.password !== password) {
-        Alert.alert('Erreur', 'Mot de passe incorrect.');
+      // Appeler l'endpoint de login
+      console.log('📡 Envoi vers /login.php...');
+      const response = await fetch('https://cfsd91.com/login.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': 'Mac131080'
+        },
+        body: JSON.stringify({
+          nom,
+          prenom,
+          password
+        })
+      });
+
+      console.log('📊 Response status:', response.status);
+      const data = await response.json();
+      console.log('📋 Response data:', data);
+
+      if (!data.success) {
+        Alert.alert('Erreur', data.message || 'Authentification échouée');
         setLoading(false);
         return;
       }
 
+      console.log('✅ Authentification réussie!');
+      const eleve = data.eleve;
+      
       // Sauvegarder l'état d'identification et les données de l'élève
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleve));
       await AsyncStorage.setItem('cfsd91_identifie', '1');
@@ -84,8 +102,8 @@ export default function Identification() {
       Alert.alert('Succès', `Bienvenue ${eleve.prenom}!`);
       router.replace('/tabs');
     } catch (error) {
-      console.error('Erreur identification:', error);
-      Alert.alert('Erreur', 'Erreur lors de l\'identification');
+      console.error('❌ Erreur authentification:', error);
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de l\'authentification');
     } finally {
       setLoading(false);
     }
@@ -94,45 +112,61 @@ export default function Identification() {
   return (
     <View style={styles.container}>
       <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 24 }}>Identification</Text>
-      <TextInput
-        style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
-        placeholder="Nom"
-        placeholderTextColor="#888"
-        value={nom}
-        onChangeText={setNom}
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
-        placeholder="Prénom"
-        placeholderTextColor="#888"
-        value={prenom}
-        onChangeText={setPrenom}
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
-        placeholder="Mot de passe"
-        placeholderTextColor="#888"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
-      {nom && prenom && found ? (
-        <Text style={{ color: '#22c55e', fontWeight: 'bold', marginBottom: 8 }}>✔ Élève reconnu</Text>
-      ) : null}
-      {nom && prenom && !found ? (
-        <Text style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: 8 }}>Nom ou prénom non reconnu</Text>
-      ) : null}
-      <View style={styles.rowBtns}>
-        <TouchableOpacity style={styles.button} onPress={handleIdentify}>
-          <Text style={styles.buttonText}>S'identifier</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => router.back()}> 
-          <Text style={styles.buttonText}>Retour</Text>
-        </TouchableOpacity>
-      </View>
+      
+      {error && (
+        <Text style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: 16, textAlign: 'center' }}>
+          ⚠️ {error}
+        </Text>
+      )}
+      
+      {loading ? (
+        <ActivityIndicator size="large" color="#b40a0a" />
+      ) : (
+        <>
+          <TextInput
+            style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
+            placeholder="Nom"
+            placeholderTextColor="#888"
+            value={nom}
+            onChangeText={setNom}
+            autoCapitalize="words"
+            editable={!loading}
+          />
+          <TextInput
+            style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
+            placeholder="Prénom"
+            placeholderTextColor="#888"
+            value={prenom}
+            onChangeText={setPrenom}
+            autoCapitalize="words"
+            editable={!loading}
+          />
+          <TextInput
+            style={[styles.input, { color: '#fff', backgroundColor: '#18181b', borderColor: '#b40a0a' }]}
+            placeholder="Mot de passe"
+            placeholderTextColor="#888"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            editable={!loading}
+          />
+          {nom && prenom && found ? (
+            <Text style={{ color: '#22c55e', fontWeight: 'bold', marginBottom: 8 }}>✔ Élève reconnu</Text>
+          ) : null}
+          {nom && prenom && !found ? (
+            <Text style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: 8 }}>Nom ou prénom non reconnu</Text>
+          ) : null}
+          <View style={styles.rowBtns}>
+            <TouchableOpacity style={styles.button} onPress={handleIdentify} disabled={loading}>
+              <Text style={styles.buttonText}>{loading ? 'Chargement...' : 'S\'identifier'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => router.back()} disabled={loading}> 
+              <Text style={styles.buttonText}>Retour</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </View>
   );
 }
