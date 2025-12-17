@@ -36,6 +36,8 @@ export default function FicheEleve() {
 	const [editData, setEditData] = useState<any>({});
 	const [isSaving, setIsSaving] = useState(false);
 
+	const isStrongPassword = (pwd: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
+
 	useEffect(() => {
 		const loadEleve = async () => {
 			setLoading(true);
@@ -44,6 +46,8 @@ export default function FicheEleve() {
 				const eleves = await fetchEleves();
 				const found = eleves.find(e => String(e.id) === String(id));
 				if (!found) throw new Error('Élève introuvable');
+				console.log('DEBUG - Élève trouvé:', found);
+				console.log('DEBUG - Password:', found.password);
 				setEleve(found);
 				setEditData({
 					photo: found.photo || '',
@@ -52,6 +56,7 @@ export default function FicheEleve() {
 					email: found.email || '',
 					adresse: found.adresse || '',
 					licence: found.licence || '',
+					password: found.password || '',
 				});
 			} catch (e: any) {
 				setError(e?.message || 'Erreur chargement fiche');
@@ -91,10 +96,16 @@ export default function FicheEleve() {
 
 	const handleSave = async () => {
 		if (!eleve || !eleve.id) return;
+
+		// Valider le mot de passe s'il est fourni
+		if (editData.password && !isStrongPassword(editData.password)) {
+			Alert.alert('Mot de passe invalide', 'Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
+			return;
+		}
 		
 		setIsSaving(true);
 		try {
-			const updateData = {
+			const updateData: any = {
 				id: eleve.id,
 				photo: editData.photo.substring(0, 5000000),
 				telUrgence: editData.telUrgence,
@@ -103,6 +114,11 @@ export default function FicheEleve() {
 				adresse: editData.adresse,
 				licence: editData.licence,
 			};
+
+			// Inclure le mot de passe s'il a été modifié
+			if (editData.password) {
+				updateData.password = editData.password;
+			}
 
 			const response = await fetch('https://cfsd91.com/eleves.php', {
 				method: 'PUT',
@@ -231,7 +247,22 @@ export default function FicheEleve() {
 							placeholder="Numéro de licence"
 							placeholderTextColor="#666"
 						/>
-
+					<Text style={{ color: '#fff', fontWeight: '600', marginTop: 16, marginBottom: 4 }}>Mot de passe (optionnel)</Text>
+					<TextInput
+						style={s.input}
+						value={editData.password || ''}
+						onChangeText={(text) => setEditData({ ...editData, password: text })}
+						placeholder="Laisser vide pour ne pas modifier"
+						placeholderTextColor="#666"
+						secureTextEntry={false}
+					/>
+					{editData.password && (
+						<Text style={{ color: isStrongPassword(editData.password) ? '#4ade80' : '#ef4444', fontSize: 12, marginBottom: 12 }}>
+							{isStrongPassword(editData.password) 
+								? '✓ Mot de passe valide' 
+								: '✗ Min 8 caractères, majuscule, minuscule, chiffre, caractère spécial'}
+						</Text>
+					)}
 						<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
 							<TouchableOpacity 
 								style={s.saveButton} 

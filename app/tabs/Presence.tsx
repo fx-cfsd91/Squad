@@ -153,6 +153,10 @@ export default function Presence() {
   const filtered = eleves.filter(e => {
     const q = search.trim().toLowerCase();
     return !q || [e.nom, e.prenom, e.discipline, e.jour].join(' ').toLowerCase().includes(q);
+  }).sort((a, b) => {
+    const nomA = (a.nom || '').toLowerCase();
+    const nomB = (b.nom || '').toLowerCase();
+    return nomA.localeCompare(nomB, 'fr');
   });
 
   const togglePresent = (id: string) => {

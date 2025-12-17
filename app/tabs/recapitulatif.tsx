@@ -36,25 +36,51 @@ type Eleve = {
 };
 
 export default function Recapitulatif() {
-    // ---- supprimer
+    // ---- supprimer un élève via l'API
     const removeEleve = async (id: string) => {
-      const next = data.filter(x => x.id !== id);
-      setData(next);
       try {
-        const r = await fetch(REMOTE_JSON_URL, {
-          method: 'POST',
+        console.log('🗑️ SUPPRESSION - Élève ID:', id);
+        
+        // Récupérer tous les élèves
+        const r1 = await fetch('https://cfsd91.com/eleves.php', {
+          headers: { 'X-API-KEY': 'Mac131080' }
+        });
+        if (!r1.ok) throw new Error(`Fetch failed: ${r1.status}`);
+        const eleves = await r1.json();
+        console.log('📥 Élèves chargés:', eleves.length);
+        
+        // Filtrer (supprimer celui-ci)
+        const filtered = Array.isArray(eleves) 
+          ? eleves.filter(e => String(e.id) !== String(id))
+          : [];
+        console.log('🔄 Après filtre:', filtered.length, 'élèves');
+        
+        // Renvoyer la nouvelle liste
+        const r2 = await fetch('https://cfsd91.com/eleves.php', {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'X-API-KEY': 'KEYOFSQUAD01@'
+            'X-API-KEY': 'Mac131080'
           },
-          body: JSON.stringify({ data: next })
+          body: JSON.stringify({ data: filtered })
         });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const out = await r.json();
-        if (!out.ok && !out.success) throw new Error(out.error || 'Erreur serveur');
-        Alert.alert('Suppression OK', `${out.count} enregistrements restants`);
+        
+        if (!r2.ok) {
+          console.log('❌ Réponse serveur:', r2.status);
+          throw new Error(`HTTP ${r2.status}`);
+        }
+        
+        const result = await r2.json();
+        console.log('✅ Réponse serveur:', result);
+        
+        // Retirer de la liste locale
+        const next = data.filter(x => String(x.id) !== String(id));
+        setData(next);
+        
+        Alert.alert('✅ Suppression réussie', `L'élève a été supprimé du serveur`);
       } catch (e: any) {
-        Alert.alert('Erreur suppression', e?.message || 'Erreur inconnue');
+        console.error('💥 Erreur suppression:', e.message);
+        Alert.alert('❌ Erreur suppression', e?.message || 'Erreur inconnue');
       }
     };
   const [data, setData] = useState<Eleve[]>([]);
@@ -214,15 +240,25 @@ export default function Recapitulatif() {
 
   // ---- recherche
   const filtered = useMemo(() => {
-    if (!q) return data;
+    let result = data;
     
-    const s = q.toLowerCase();
-    const result = data.filter(e =>
-      [e.nom, e.prenom, e.discipline, e.jour, e.telUrgence, e.telEleve, e.email]
-        .some(v => (v || '').toLowerCase().includes(s))
-    );
+    // Filtrer si recherche
+    if (q) {
+      const s = q.toLowerCase();
+      result = data.filter(e =>
+        [e.nom, e.prenom, e.discipline, e.jour, e.telUrgence, e.telEleve, e.email]
+          .some(v => (v || '').toLowerCase().includes(s))
+      );
+      console.log('🔍 Recherche "' + q + '":', result.length, 'résultats');
+    }
     
-    console.log('🔍 Recherche "' + q + '":', result.length, 'résultats');
+    // Trier par nom (ordre alphabétique)
+    result.sort((a, b) => {
+      const nomA = (a.nom || '').toLowerCase();
+      const nomB = (b.nom || '').toLowerCase();
+      return nomA.localeCompare(nomB, 'fr');
+    });
+    
     return result;
   }, [data, q]);
 
@@ -411,11 +447,14 @@ export default function Recapitulatif() {
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={s.rowCard} onPress={() => {
-            console.log('ID transmis à la fiche:', item.id);
-            router.push(`/tabs/fiche/${item.id}`);
-          }}>
-            <View style={{ flexDirection: 'row', gap: 12, flex: 1 }}>
+          <View style={[s.rowCard, { position: 'relative' }]}>
+            <Pressable 
+              style={{ flexDirection: 'row', gap: 12, paddingRight: 60 }}
+              onPress={() => {
+                console.log('ID transmis à la fiche:', item.id);
+                router.push(`/tabs/fiche/${item.id}`);
+              }}
+            >
               {item.photo ? (
                 <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={s.photo} />
               ) : (
@@ -442,11 +481,55 @@ export default function Recapitulatif() {
                   <Text style={[s.mutedSmall, { color: '#4ade80', marginTop: 2 }]}>✉️ {item.email}</Text>
                 )}
               </View>
-            </View>
-            <View style={s.actions}>
-              {/* Boutons QR et Copier lien retirés */}
-            </View>
-          </TouchableOpacity>
+            </Pressable>
+            <TouchableOpacity 
+              style={{ 
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                width: 50, 
+                height: 50, 
+                borderRadius: 25, 
+                backgroundColor: '#b40a0a', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                borderWidth: 2,
+                borderColor: '#fff',
+                zIndex: 999
+              }}
+              activeOpacity={0.7}
+              onPress={() => {
+                console.log('🔴 CROIX CLIQUÉE pour:', item.id, item.prenom, item.nom);
+                
+                // Web: window.confirm() | Mobile: Alert.alert()
+                const isWeb = typeof window !== 'undefined';
+                
+                if (isWeb && window.confirm) {
+                  // Sur Web
+                  if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${item.prenom} ${item.nom} ?`)) {
+                    console.log('✅ Confirmation Web - suppression');
+                    removeEleve(item.id);
+                  }
+                } else {
+                  // Sur Mobile
+                  Alert.alert(
+                    'Supprimer élève',
+                    `Êtes-vous sûr de vouloir supprimer ${item.prenom} ${item.nom} ?`,
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { 
+                        text: 'Supprimer', 
+                        onPress: () => removeEleve(item.id),
+                        style: 'destructive'
+                      }
+                    ]
+                  );
+                }
+              }}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
         )}
       />
 
