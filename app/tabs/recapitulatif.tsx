@@ -36,53 +36,6 @@ type Eleve = {
 };
 
 export default function Recapitulatif() {
-    // ---- supprimer un élève via l'API
-    const removeEleve = async (id: string) => {
-      try {
-        console.log('🗑️ SUPPRESSION - Élève ID:', id);
-        
-        // Récupérer tous les élèves
-        const r1 = await fetch('https://cfsd91.com/eleves.php', {
-          headers: { 'X-API-KEY': 'Mac131080' }
-        });
-        if (!r1.ok) throw new Error(`Fetch failed: ${r1.status}`);
-        const eleves = await r1.json();
-        console.log('📥 Élèves chargés:', eleves.length);
-        
-        // Filtrer (supprimer celui-ci)
-        const filtered = Array.isArray(eleves) 
-          ? eleves.filter(e => String(e.id) !== String(id))
-          : [];
-        console.log('🔄 Après filtre:', filtered.length, 'élèves');
-        
-        // Renvoyer la nouvelle liste
-        const r2 = await fetch('https://cfsd91.com/eleves.php', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': 'Mac131080'
-          },
-          body: JSON.stringify({ data: filtered })
-        });
-        
-        if (!r2.ok) {
-          console.log('❌ Réponse serveur:', r2.status);
-          throw new Error(`HTTP ${r2.status}`);
-        }
-        
-        const result = await r2.json();
-        console.log('✅ Réponse serveur:', result);
-        
-        // Retirer de la liste locale
-        const next = data.filter(x => String(x.id) !== String(id));
-        setData(next);
-        
-        Alert.alert('✅ Suppression réussie', `L'élève a été supprimé du serveur`);
-      } catch (e: any) {
-        console.error('💥 Erreur suppression:', e.message);
-        Alert.alert('❌ Erreur suppression', e?.message || 'Erreur inconnue');
-      }
-    };
   const [data, setData] = useState<Eleve[]>([]);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
@@ -158,6 +111,40 @@ export default function Recapitulatif() {
     }
   };
 
+  // ---- supprimer un élève via l'API DELETE
+  const removeEleve = useCallback(async (id: string) => {
+    try {
+      console.log('🗑️ SUPPRESSION - Élève ID:', id);
+      
+      // Utiliser DELETE avec juste l'ID
+      const r = await fetch(REMOTE_JSON_URL, {
+        method: 'DELETE',
+        headers: API_HEADERS,
+        body: JSON.stringify({ id: id })
+      });
+      
+      if (!r.ok) {
+        console.log('❌ Réponse serveur:', r.status);
+        throw new Error(`HTTP ${r.status}`);
+      }
+      
+      const result = await r.json();
+      console.log('✅ Réponse serveur:', result);
+      
+      // Retirer de la liste locale
+      console.log('🗑️ Suppression locale en cours pour ID:', id);
+      setData(prevData => {
+        const next = prevData.filter(x => String(x.id) !== String(id));
+        console.log('📊 État local après suppression:', next.length, 'élèves');
+        return next;
+      });
+      
+      Alert.alert('✅ Suppression réussie', `L'élève a été supprimé`);
+    } catch (e: any) {
+      console.error('💥 Erreur suppression:', e.message);
+      Alert.alert('❌ Erreur suppression', e?.message || 'Erreur inconnue');
+    }
+  }, []);
 
   // ---- copier lien fiche web
   // Fonction copyLink retirée
