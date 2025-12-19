@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-import { STORAGE_KEYS, API_CONFIG } from '../../constants/config';
+import { STORAGE_KEYS, API_CONFIG, API_HEADERS } from '../../constants/config';
 import { Eleve } from '../../constants/types';
 import { normalizeString } from '../../lib/utils';
 
@@ -24,7 +24,7 @@ export default function Identification() {
         console.log('📥 Chargement des élèves...');
         const res = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
           cache: 'no-store',
-          headers: { 'X-API-KEY': 'Mac131080' }
+          headers: API_HEADERS
         });
         console.log('📡 Response status:', res.status);
         if (!res.ok) {
@@ -72,7 +72,7 @@ export default function Identification() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': 'Mac131080'
+          ...API_HEADERS
         },
         body: JSON.stringify({
           nom,
