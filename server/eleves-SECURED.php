@@ -6,70 +6,14 @@
 
 ini_set('memory_limit', '512M');
 ini_set('max_execution_time', '60');
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
-header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
+
+// Inclure la configuration d'authentification centralisée
+require_once dirname(dirname(__DIR__)) . '/priv/api-auth.php';
 
 $elevesFile = dirname(__DIR__, 2) . '/priv/eleves.json';
-$logsDir = dirname(__DIR__, 2) . '/priv/api_logs';
 
-// ⚠️  CLÉ API - À STOCKER DANS LES VARIABLES D'ENVIRONNEMENT EN PRODUCTION
-$ALLOWED_KEYS = ['Mac131080'];
-
-// Créer le dossier de logs
-@mkdir($logsDir, 0755, true);
-
-/**
- * Log les accès API pour audit
- */
-function logApiAccess($method, $apiKey, $status, $details = '') {
-    global $logsDir;
-    $logFile = $logsDir . '/access.log';
-    $keyMask = !empty($apiKey) ? substr($apiKey, 0, 3) . '***' . substr($apiKey, -3) : 'NONE';
-    $logEntry = date('Y-m-d H:i:s') . " | $method | Key: $keyMask | Status: $status | IP: {$_SERVER['REMOTE_ADDR']} | $details\n";
-    @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
-}
-
-/**
- * Extrait la clé API depuis le header X-API-KEY
- */
-function getApiKey() {
-    $apiKey = '';
-    
-    if (function_exists('getallheaders')) {
-        $headers = getallheaders();
-        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
-    }
-    
-    if (empty($apiKey)) {
-        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-    }
-    
-    if (empty($apiKey) && function_exists('apache_request_headers')) {
-        $headers = apache_request_headers();
-        $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
-    }
-    
-    return $apiKey;
-}
-
-// CORS preflight
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
+// Récupérer la méthode HTTP
 $method = $_SERVER['REQUEST_METHOD'];
-$apiKey = getApiKey();
-
-// ✅ VÉRIFICATION OBLIGATOIRE DE LA CLÉ API POUR TOUS LES ENDPOINTS
-if (!in_array($apiKey, $ALLOWED_KEYS)) {
-    http_response_code(401);
-    logApiAccess($method, $apiKey, 401, 'Unauthorized - Invalid or missing API key');
-    echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
-    exit;
-}
 
 // Fonctions helper
 function readEleves($file) {

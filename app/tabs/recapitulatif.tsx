@@ -322,8 +322,8 @@ export default function Recapitulatif() {
             <Pressable onPress={exportToCSV} accessibilityLabel="Exporter CSV" style={{ padding: 6 }}>
               <Ionicons name="download-outline" size={22} color="#000" />
             </Pressable>
-            <Pressable onPress={() => router.push('/')} accessibilityLabel="Accueil" style={{ padding: 6 }}>
-              <Ionicons name="home" size={22} color="#000" />
+            <Pressable onPress={() => router.back()} accessibilityLabel="Retour" style={{ padding: 6 }}>
+              <Ionicons name="arrow-back" size={22} color="#000" />
             </Pressable>
           </View>
         )}

@@ -6,7 +6,7 @@ import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-import { API_CONFIG, STORAGE_KEYS } from '../../constants/config';
+import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
 import { Eleve, Presence as PresenceType } from '../../constants/types';
 import { fetchEleves } from '../../lib/api';
 
@@ -70,7 +70,7 @@ export default function Presence() {
     try {
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'no-store',
-        headers: { 'X-API-KEY': 'Mac131080' }
+        headers: API_HEADERS
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const arr = await r.json();

@@ -19,6 +19,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $SECRET = 'Mac131080';
 $coursesFile = __DIR__ . '/courses.json';
 
+// Récupérer la méthode HTTP
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Vérification de l'authentification pour les méthodes qui modifient SEULEMENT
+if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
+    $apiKey = '';
+    
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $apiKey = $headers['X-API-KEY'] ?? $headers['X-Api-Key'] ?? $headers['x-api-key'] ?? '';
+    }
+    
+    if (empty($apiKey)) {
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
+    }
+    
+    if ($apiKey !== $SECRET) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid API key']);
+        exit;
+    }
+}
+
 // Fonction pour lire les cours
 function readCourses($file) {
     if (!file_exists($file)) {
@@ -39,36 +62,19 @@ function saveCourses($file, $data) {
         @unlink($temp);
         throw new Exception('Failed to rename file');
     }
-    @chmod($file, 0600); // ✅ Permissions restrictives
-}
-
-// Vérification de l'authentification pour les méthodes qui modifient
-$method = $_SERVER['REQUEST_METHOD'];
-if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
-    $headers = getallheaders();
-    $apiKey = $headers['X-API-KEY'] ?? $headers['X-Api-Key'] ?? $headers['x-api-key'] ?? '';
-    
-    if ($apiKey !== $SECRET) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid API key']);
-        exit;
-    }
+    @chmod($file, 0600);
 }
 
 // Routage selon la méthode HTTP
-switch ($method) {
-    case 'GET':
-        // ✅ SÉCURITÉ : Vérifier la clé API pour GET aussi
-        $headers = getallheaders();
-        $apiKey = $headers['X-API-KEY'] ?? $headers['X-Api-Key'] ?? $headers['x-api-key'] ?? '';
-        
-        if ($apiKey !== $SECRET) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
-            exit;
+try {
+    switch ($method) {
+        case 'GET':
+        // Récupérer tous les cours (sans authentification)
+        if (!is_readable($coursesFile)) {
+            echo json_encode(['courses' => [], 'lastUpdate' => date('Y-m-d H:i:s')]);
+            break;
         }
         
-        // Récupérer tous les cours
         $data = readCourses($coursesFile);
         echo json_encode($data);
         break;
@@ -243,4 +249,8 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Method Not Allowed']);
         break;
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server Error', 'message' => $e->getMessage()]);
 }

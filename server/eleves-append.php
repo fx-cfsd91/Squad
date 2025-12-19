@@ -6,19 +6,10 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, cache-control');
-header('Cache-Control: no-store, no-cache, must-revalidate, private');
-header('X-Content-Type-Options: nosniff');
+// Inclure la configuration d'authentification centralisée
+require_once dirname(dirname(__DIR__)) . '/priv/api-auth.php';
 
 $path = dirname(__DIR__, 2) . '/priv/eleves.json';
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (!is_file($path)) {
@@ -36,12 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-    if ($apiKey !== 'Mac131080') {
-        http_response_code(403);
-        echo json_encode(['ok'=>false,'error'=>'Clé API invalide']);
-        exit;
-    }
 
     $in = json_decode(file_get_contents('php://input'), true);
     if (!is_array($in) || !isset($in['data']) || !is_array($in['data'])) {

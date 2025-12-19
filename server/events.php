@@ -1,6 +1,6 @@
 <?php
 // ============================================
-// 🔒 API SÉCURISÉE - AUTHENTIFICATION REQUISE
+// 🔒 API SÉCURISÉE - AUTHENTIFICATION REQUISE POUR MODIFICATIONS
 // ============================================
 
 ini_set('memory_limit', '512M');
@@ -12,11 +12,21 @@ header('Access-Control-Allow-Headers: Content-Type, X-API-KEY');
 
 $eventsFile = dirname(__DIR__, 2) . '/priv/events.json';
 
-// ⚠️  CLÉ API SÉCURISÉE - À STOCKER DANS LES VARIABLES D'ENVIRONNEMENT EN PRODUCTION
-$ALLOWED_KEYS = ['Mac131080'];
+// Gestion des requêtes OPTIONS (CORS preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, X-API-KEY, Authorization');
+    header('Access-Control-Max-Age: 86400');
+    exit;
+}
 
-// Fonction pour extraire la clé API
-function getApiKey() {
+// Récupérer la méthode HTTP
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Vérification de l'authentification pour les méthodes qui modifient SEULEMENT
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
     $apiKey = '';
     
     if (function_exists('getallheaders')) {
@@ -33,27 +43,11 @@ function getApiKey() {
         $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
     }
     
-    return $apiKey;
-}
-
-// Gestion des requêtes OPTIONS (CORS preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-API-KEY, Authorization');
-    header('Access-Control-Max-Age: 86400');
-    exit;
-}
-
-$method = $_SERVER['REQUEST_METHOD'];
-$apiKey = getApiKey();
-
-// ✅ AUTHENTIFICATION REQUISE POUR TOUTES LES REQUÊTES (GET, POST, PUT, DELETE)
-if (!in_array($apiKey, $ALLOWED_KEYS)) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
-    exit;
+    if ($apiKey !== 'Mac131080') {
+        http_response_code(401);
+        echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
+        exit;
+    }
 }
 
 // Fonctions helper
@@ -74,12 +68,17 @@ function saveEvents($file, $data) {
 }
 
 // Routage selon la méthode HTTP
-switch ($method) {
-    case 'GET':
-        // Récupérer tous les événements
-        $data = readEvents($eventsFile);
-        echo json_encode($data);
-        break;
+try {
+    switch ($method) {
+        case 'GET':
+            // Récupérer tous les événements (sans authentification)
+            if (!is_readable($eventsFile)) {
+                echo json_encode(['events' => [], 'lastUpdate' => date('Y-m-d H:i:s')]);
+                break;
+            }
+            $data = readEvents($eventsFile);
+            echo json_encode($data);
+            break;
         
     case 'POST':
         // Ajouter un nouvel événement
@@ -199,4 +198,8 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Method Not Allowed']);
         break;
+}
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server Error', 'message' => $e->getMessage()]);
 }
