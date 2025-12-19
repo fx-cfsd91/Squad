@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
 import { Eleve, Presence as PresenceType } from '../../constants/types';
@@ -54,8 +54,8 @@ export default function Presence() {
         } catch { history = []; }
       }
       history.push(newPresence);
-      await AsyncStorage.setItem(STORAGE_KEYS.PRESENCE, JSON.stringify(history));
-      Alert.alert('Présences enregistrées', `${presentEleves.length} élève(s) présent(s) sauvegardé(s).`);
+      console.log('💾 Présences prêtes pour export:', presentEleves.length);
+      Alert.alert('✅ Présences prêtes', `${presentEleves.length} élève(s) présent(s). Utilisez l'export pour partager.`);
     } catch (e) {
       Alert.alert('Erreur', 'Impossible d’enregistrer les présences.');
     }
@@ -84,17 +84,20 @@ export default function Presence() {
   // Export CSV
   const exportToCSV = async () => {
     try {
-      if (eleves.length === 0) {
-        Alert.alert('Export CSV', 'Aucune donnée à exporter');
+      console.log('📥 Clic sur export CSV détecté');
+      
+      // Filtrer les élèves présents
+      const presentIds = Object.keys(present).filter((id: string) => present[id]);
+      const presentEleves = eleves.filter((e: any) => presentIds.includes(e.id));
+      console.log('📋 Élèves présents:', presentEleves.length);
+
+      if (presentEleves.length === 0) {
+        Alert.alert('Export CSV', 'Aucun élève présent à exporter');
         return;
       }
 
-      // En-têtes CSV
-      const headers = [
-        'ID', 'Nom', 'Prénom', 'Naissance', 'Age', 'Jour', 'Discipline', 
-        'Combattant', 'Étudiant', 'Tél. Urgence', 'Tél. Élève', 'Email', 
-        'Adresse', 'Ceinture', 'Licence', 'Date création'
-      ];
+      // En-têtes CSV simplifiés
+      const headers = ['Nom', 'Prénom', 'Discipline', 'Jour'];
 
       // Fonction pour échapper les valeurs CSV
       const escapeCSV = (value: any): string => {
@@ -106,47 +109,83 @@ export default function Presence() {
         return str;
       };
 
-      // Construire les lignes CSV
-      const rows = eleves.map(eleve => [
-        escapeCSV(eleve.id),
+      // Construire les lignes CSV simplifiées
+      const rows = presentEleves.map(eleve => [
         escapeCSV(eleve.nom),
         escapeCSV(eleve.prenom),
-        escapeCSV(eleve.naissance),
-        escapeCSV(eleve.age),
-        escapeCSV(eleve.jour),
         escapeCSV(eleve.discipline),
-        escapeCSV(eleve.combattant ? 'Oui' : 'Non'),
-        escapeCSV(eleve.etudiant ? 'Oui' : 'Non'),
-        escapeCSV(eleve.telUrgence),
-        escapeCSV(eleve.telEleve),
-        escapeCSV(eleve.email),
-        escapeCSV(eleve.adresse),
-        escapeCSV(eleve.ceinture),
-        escapeCSV(eleve.licence),
-        escapeCSV(eleve.createdAt)
+        escapeCSV(eleve.jour)
       ].join(','));
 
-      // Assembler le CSV complet
-      const csvContent = [headers.join(','), ...rows].join('\n');
+      // Assembler le CSV
+      const csvContent = [
+        `Date de saisie,${new Date().toLocaleDateString()}`,
+        '',
+        headers.join(','),
+        ...rows
+      ].join('\n');
 
-      // Skip FileSystem deprecated API
-      // Create a data URL instead and trigger download directly
-      const dataUrl = `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
+      console.log('📄 CSV prêt, taille:', csvContent.length);
 
-      // Partager le fichier
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        // Share data URL directly
-        await Sharing.shareAsync(dataUrl, {
-          mimeType: 'text/csv',
-          dialogTitle: 'Exporter les élèves en CSV'
-        });
+      if (Platform.OS === 'web') {
+        // Sur web : créer un dialog HTML
+        const message = `${presentEleves.length} élève(s) présent(s)\n\nComment voulez-vous partager ?\n\n[1] Télécharger\n[2] Email\n[3] WhatsApp\n[4] Copier`;
+        const choice = window.prompt(message, '1');
+
+        console.log('User chose:', choice);
+
+        if (choice === '1') {
+          // Télécharger
+          const element = document.createElement('a');
+          element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+          element.setAttribute('download', `presence_${new Date().toISOString().split('T')[0]}.csv`);
+          element.style.display = 'none';
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
+          console.log('✅ Téléchargement web réussi');
+          Alert.alert('✅ Téléchargé', `${presentEleves.length} élève(s) téléchargé(s).`);
+        } else if (choice === '2') {
+          // Email
+          const subject = `Présences du ${new Date().toLocaleDateString()}`;
+          const body = `Élèves présents :\n\n${csvContent}`;
+          const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          window.location.href = mailto;
+          console.log('✅ Email préparé');
+        } else if (choice === '3') {
+          // WhatsApp
+          const whatsappText = `Présences du ${new Date().toLocaleDateString()}\n\n${csvContent}`;
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
+          window.open(whatsappUrl, '_blank');
+          console.log('✅ WhatsApp ouvert');
+        } else if (choice === '4') {
+          // Copier
+          navigator.clipboard.writeText(csvContent).then(() => {
+            Alert.alert('✅ Copié', 'Le contenu CSV a été copié dans le presse-papiers');
+            console.log('✅ Copié dans le presse-papiers');
+          });
+        } else {
+          console.log('⚠️ Partage annulé');
+        }
       } else {
-        Alert.alert('Export CSV', 'Export CSV terminé.');
+        // Sur mobile : utiliser Sharing native (Mail, WhatsApp, etc.)
+        const fileName = `presence_${new Date().toISOString().split('T')[0]}.csv`;
+        const filePath = FileSystem.documentDirectory + fileName;
+        
+        console.log('💾 Création du fichier:', fileName);
+        await FileSystem.writeAsStringAsync(filePath, csvContent);
+        
+        console.log('📤 Ouverture des options de partage...');
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'text/csv',
+          dialogTitle: `Partager ${presentEleves.length} élève(s) présent(s)`
+        });
+        console.log('✅ Partage mobile réussi');
       }
 
     } catch (error: any) {
-      Alert.alert('Erreur', `Impossible d'exporter le CSV: ${error?.message || 'Erreur inconnue'}`);
+      console.error('❌ Erreur export:', error);
+      Alert.alert('Erreur', `Impossible d'exporter: ${error?.message || 'Erreur inconnue'}`);
     }
   };
 
