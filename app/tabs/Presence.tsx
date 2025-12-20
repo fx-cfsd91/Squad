@@ -169,8 +169,14 @@ export default function Presence() {
         }
       } else {
         // Sur mobile : utiliser Sharing native (Mail, WhatsApp, etc.)
+        const docDir = (FileSystem as any).documentDirectory;
+        if (typeof docDir === 'undefined' || !docDir) {
+          Alert.alert('Erreur', 'FileSystem non disponible');
+          return;
+        }
+        
         const fileName = `presence_${new Date().toISOString().split('T')[0]}.csv`;
-        const filePath = FileSystem.documentDirectory + fileName;
+        const filePath = docDir + fileName;
         
         console.log('💾 Création du fichier:', fileName);
         await FileSystem.writeAsStringAsync(filePath, csvContent);

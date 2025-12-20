@@ -71,8 +71,8 @@ export default function Identification() {
       const response = await fetch('https://cfsd91.com/login.php', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          ...API_HEADERS
+          ...API_HEADERS,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           nom,

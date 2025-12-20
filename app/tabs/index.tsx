@@ -10,6 +10,7 @@ import {
   Dimensions,
   Image,
   ImageBackground,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -183,6 +184,7 @@ export default function Home() {
   { key: 'pres', title: 'PRESENCE',    image: require('../../assets/images/presence-bg.png'), onPress: () => router.push('/tabs/Presence'),       adminOnly: true },
   { key: 'cours', title: 'COURS',      image: require('../../assets/images/image_cours.png'), onPress: () => router.push('/tabs/courses'),        adminOnly: true },
   { key: 'events', title: 'ÉVÉNEMENTS',      image: require('../../assets/images/image_evts.png'), onPress: () => router.push('/tabs/events'),        adminOnly: true },
+  { key: 'website', title: 'ARTICLES DU SITE',   image: require('../../assets/images/image_articles.png'), onPress: () => Linking.openURL('https://cfsd91.com/blog/'), adminOnly: false },
   ]), []);
 
   // Filtrer les cartes selon l'état admin et identifié

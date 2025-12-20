@@ -43,7 +43,7 @@ if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
         $apiKey = $headers['X-API-KEY'] ?? $headers['x-api-key'] ?? '';
     }
     
-    if ($apiKey !== 'Mac131080') {
+    if ($apiKey !== 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e') {
         http_response_code(401);
         echo json_encode(['error' => 'Unauthorized', 'message' => 'Invalid or missing API key']);
         exit;

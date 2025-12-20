@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Configuration
-$SECRET = 'Mac131080';
+$SECRET = 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e';
 $coursesFile = __DIR__ . '/courses.json';
 
 // Récupérer la méthode HTTP
