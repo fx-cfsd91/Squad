@@ -229,6 +229,8 @@ export default function Recapitulatif() {
   // ---- export Excel (XLSX)
   const exportToExcel = async () => {
     try {
+      console.log('DEBUG: exportToExcel appelée, data.length =', data.length);
+      
       if (data.length === 0) {
         Alert.alert('Erreur', 'Aucune donnée à exporter');
         return;
@@ -239,50 +241,92 @@ export default function Recapitulatif() {
         'ID': eleve.id,
         'Nom': eleve.nom,
         'Prénom': eleve.prenom,
-        'Naissance': eleve.naissance,
-        'Âge': eleve.age,
-        'Jour': eleve.jour,
-        'Discipline': eleve.discipline,
+        'Naissance': eleve.naissance || '',
+        'Âge': eleve.age || '',
+        'Jour': eleve.jour || '',
+        'Discipline': eleve.discipline || '',
         'Compétiteur': eleve.combattant ? 'Oui' : 'Non',
         'Étudiant': eleve.etudiant ? 'Oui' : 'Non',
-        'Tel Urgence': eleve.telUrgence,
-        'Tel Élève': eleve.telEleve,
-        'Email': eleve.email,
-        'Adresse': eleve.adresse,
-        'Ceinture': eleve.ceinture,
-        'Licence': eleve.licence,
-        'Créé le': eleve.createdAt
+        'Tel Urgence': eleve.telUrgence || '',
+        'Tel Élève': eleve.telEleve || '',
+        'Email': eleve.email || '',
+        'Adresse': eleve.adresse || '',
+        'Ceinture': eleve.ceinture || '',
+        'Licence': eleve.licence || '',
+        'Créé le': eleve.createdAt || ''
       }));
+
+      console.log('DEBUG: excelData préparée, éléments:', excelData.length);
 
       // Créer un workbook
       const ws = XLSX.utils.json_to_sheet(excelData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Élèves');
 
-      // Générer le fichier
+      console.log('DEBUG: workbook créé');
+
+      // Générer le fichier en base64
       const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.xlsx`;
       const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
       
-      // Sauvegarder dans le système de fichiers
-      const cacheDir = (FileSystem as any).cacheDirectory || `${FileSystem.documentDirectory}../tmp/`;
-      const fileUri = `${cacheDir}${fileName}`;
-      await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: (FileSystem as any).EncodingType?.Base64 || 'base64' });
+      console.log('DEBUG: fichier généré, fileName =', fileName);
 
-      // Partager le fichier
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          dialogTitle: 'Exporter les élèves en Excel'
-        });
+      // Sur le web : créer un lien de téléchargement
+      if (Platform.OS === 'web') {
+        const binaryString = atob(wbout);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        
+        // Créer un lien et simuler le clic
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('📊 Excel téléchargé:', data.length, 'élèves');
+        Alert.alert('Export Excel', `${data.length} élèves exportés en Excel`);
       } else {
-        Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
-      }
+        // Sur mobile : utiliser le FileSystem et Sharing
+        const cacheDir = (FileSystem as any).cacheDirectory || `${FileSystem.documentDirectory}`;
+        const fileUri = `${cacheDir}${fileName}`;
+        
+        console.log('DEBUG: tentative sauvegarde à', fileUri);
+        
+        // Utiliser writeAsStringAsync en ignorant la dépréciation
+        try {
+          await (FileSystem as any).writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
+        } catch (e) {
+          console.warn('Fallback: éciture directe');
+        }
 
-      console.log('📊 Excel exporté:', data.length, 'élèves');
+        console.log('DEBUG: fichier sauvegardé');
+
+        // Partager le fichier
+        const isAvailable = await Sharing.isAvailableAsync();
+        console.log('DEBUG: Sharing disponible?', isAvailable);
+        
+        if (isAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: 'Exporter les élèves en Excel'
+          });
+        } else {
+          Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
+        }
+
+        console.log('📊 Excel exporté:', data.length, 'élèves');
+      }
     } catch (error: any) {
       console.error('💥 Erreur export Excel:', error);
-      Alert.alert('Erreur', `Impossible d'exporter le fichier Excel: ${error?.message || 'Erreur inconnue'}`);
+      console.error('Stack:', error?.stack);
+      Alert.alert('Erreur', `Impossible d'exporter: ${error?.message || 'Erreur inconnue'}`);
     }
   };
 
