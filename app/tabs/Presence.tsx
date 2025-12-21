@@ -21,6 +21,8 @@ export default function Presence() {
   const [oldPresences, setOldPresences] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
   // Fonction pour lire les fichiers de présence précédents
   const loadOldPresences = async () => {
@@ -66,19 +68,36 @@ export default function Presence() {
     loadElevesFromServer();
   }, []);
 
-  // Charger les élèves depuis le serveur
+  // Charger les élèves depuis le serveur (avec caching HTTP)
   const loadElevesFromServer = async () => {
     try {
+      setIsLoading(true);
+      console.log('🌐 Chargement des élèves...');
+      
       const r = await fetch(REMOTE_JSON_URL, {
-        cache: 'no-store',
+        cache: 'force-cache', // Utiliser le cache agressivement
         headers: API_HEADERS
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status}`);
+      }
+      
       const arr = await r.json();
-      if (!Array.isArray(arr)) throw new Error('JSON inattendu');
+      
+      if (!Array.isArray(arr)) {
+        throw new Error('Format JSON inattendu');
+      }
+      
+      console.log('✅ Élèves chargés:', arr.length);
       setEleves(arr);
+      setLastUpdate(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+      
     } catch (error: any) {
-      Alert.alert('Erreur', `Impossible de charger les élèves: ${error?.message || 'Erreur inconnue'}`);
+      console.error('❌ Erreur chargement:', error);
+      Alert.alert('Erreur', `Impossible de charger les élèves: ${error?.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
