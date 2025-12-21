@@ -294,8 +294,8 @@ export default function Recapitulatif() {
         Alert.alert('Export Excel', `${data.length} élèves exportés en Excel`);
       } else {
         // Sur mobile : utiliser le FileSystem et Sharing
-        const cacheDir = (FileSystem as any).cacheDirectory || `${FileSystem.documentDirectory}`;
-        const fileUri = `${cacheDir}${fileName}`;
+        const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '';
+        const fileUri = cacheDir ? `${cacheDir}${fileName}` : fileName;
         
         console.log('DEBUG: tentative sauvegarde à', fileUri);
         
