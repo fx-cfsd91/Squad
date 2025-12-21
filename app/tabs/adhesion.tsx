@@ -9,7 +9,7 @@ import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 // import { CameraConstants } from 'expo-camera';
 
@@ -74,6 +74,7 @@ export default function Adhesion() {
   const [isEtudiant, setIsEtudiant] = useState(false);
   const [isRenouvellement, setIsRenouvellement] = useState(false);
   const [isAutorisationDepartSeul, setIsAutorisationDepartSeul] = useState(false);
+  const [isReglementLu, setIsReglementLu] = useState(false);
   
   const [loading,setLoading]=useState(false);
   const [eleves, setEleves] = useState<Eleve[]>([]);
@@ -120,7 +121,7 @@ export default function Adhesion() {
 
         // Charger uniquement depuis le serveur IONOS avec clé API
         const response = await fetch(REMOTE_JSON_URL, {
-          headers: { 'X-API-KEY': 'Mac131080' }
+          headers: { 'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e' }
         });
         if (!response.ok) {
           throw new Error(`Erreur serveur: ${response.status}`);
@@ -142,6 +143,12 @@ export default function Adhesion() {
   }, []);
   
   const onSubmit = async()=>{
+    console.log('DEBUG: onSubmit appelée, isReglementLu =', isReglementLu);
+    if(!isReglementLu){
+      console.log('DEBUG: Affichage alerte règlement');
+      alert('Vous devez accepter le règlement intérieur du CFSD91.');
+      return;
+    }
     if(!nom.trim()||!prenom.trim()||!naissance||!jour||!discipline||!telUrgence.trim()){
       Alert.alert('Champs obligatoires','Renseigne Nom, Prénom, Date, Jour, Discipline, Tél. d\'urgence.'); return;
     }
@@ -162,7 +169,7 @@ export default function Adhesion() {
 
     const d:Eleve = {
       id: uuid(), nom: nom.trim(), prenom: normalizeString(prenom.trim()), naissance: naissanceISO, jour, discipline,
-      combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, autorisationDepartSeul: isAutorisationDepartSeul, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
+      combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, autorisationDepartSeul: !isAutorisationDepartSeul, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
       email: email.trim(), adresse: adresse.trim(), poids: poids ? Number(poids) : null, licence: licence.trim(),
       ceinture, photo: photo.substring(0, 5000000), // Limiter la taille de la photo à 5MB
       createdAt: new Date().toISOString(),
@@ -177,7 +184,7 @@ export default function Adhesion() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': 'Mac131080'
+          'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e'
         },
         body: JSON.stringify({ data: [d] })
       });
@@ -450,11 +457,27 @@ export default function Adhesion() {
                 </View>
                 <Text style={{ color: '#fff', fontSize: 13 }}>Renouvellement</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => setIsAutorisationDepartSeul(v => !v)}>
-                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#b40a0aff', backgroundColor: isAutorisationDepartSeul ? '#b40a0aff' : '#18181b', marginRight: 8, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }} onPress={() => setIsAutorisationDepartSeul(v => !v)}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#b40a0aff', backgroundColor: isAutorisationDepartSeul ? '#b40a0aff' : '#18181b', marginTop: 2, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                   {isAutorisationDepartSeul && <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>}
                 </View>
-                <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1, flexWrap: 'wrap' }}>Autorisation de partir seul(e) (ne concerne que les mineurs).</Text>
+                <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1, flexWrap: 'wrap' }}>Je n'autorise pas mon enfant à partir seul{'\n'}(ne concerne que les élèves du cours KIDS ou WARRIORS).</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Règlement intérieur - REQUIRED */}
+            <View style={{ marginTop: 24, marginBottom: 24, paddingHorizontal: 12, paddingVertical: 14, backgroundColor: '#1a1a1a', borderRadius: 8, borderWidth: 1, borderColor: '#b40a0a' }}>
+              <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }} onPress={() => setIsReglementLu(v => !v)}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#b40a0aff', backgroundColor: isReglementLu ? '#b40a0aff' : '#18181b', marginTop: 2, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  {isReglementLu && <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Règlement intérieur <Text style={{ color: '#ef4444' }}>*</Text></Text>
+                  <Pressable onPress={() => Linking.openURL('https://cfsd91.com/reglement-interieur-du-cfsd91/')}>
+                    <Text style={{ color: '#3b82f6', fontSize: 12, textDecorationLine: 'underline' }}>https://cfsd91.com/reglement-interieur-du-cfsd91/</Text>
+                  </Pressable>
+                  <Text style={{ color: '#9ca3af', fontSize: 11, marginTop: 6 }}>Je certifie avoir lu et accepté le règlement intérieur du CFSD91.</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
