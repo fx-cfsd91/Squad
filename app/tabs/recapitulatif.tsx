@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import * as XLSX from 'xlsx';
 import HeaderBar from '../../components/header-bar';
 import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
 import { fetchEleves } from '../../lib/api';
@@ -225,6 +226,66 @@ export default function Recapitulatif() {
     }
   };
 
+  // ---- export Excel (XLSX)
+  const exportToExcel = async () => {
+    try {
+      if (data.length === 0) {
+        Alert.alert('Erreur', 'Aucune donnée à exporter');
+        return;
+      }
+
+      // Préparer les données pour Excel
+      const excelData = data.map(eleve => ({
+        'ID': eleve.id,
+        'Nom': eleve.nom,
+        'Prénom': eleve.prenom,
+        'Naissance': eleve.naissance,
+        'Âge': eleve.age,
+        'Jour': eleve.jour,
+        'Discipline': eleve.discipline,
+        'Compétiteur': eleve.combattant ? 'Oui' : 'Non',
+        'Étudiant': eleve.etudiant ? 'Oui' : 'Non',
+        'Tel Urgence': eleve.telUrgence,
+        'Tel Élève': eleve.telEleve,
+        'Email': eleve.email,
+        'Adresse': eleve.adresse,
+        'Ceinture': eleve.ceinture,
+        'Licence': eleve.licence,
+        'Créé le': eleve.createdAt
+      }));
+
+      // Créer un workbook
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Élèves');
+
+      // Générer le fichier
+      const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      
+      // Sauvegarder dans le système de fichiers
+      const cacheDir = (FileSystem as any).cacheDirectory || `${FileSystem.documentDirectory}../tmp/`;
+      const fileUri = `${cacheDir}${fileName}`;
+      await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: (FileSystem as any).EncodingType?.Base64 || 'base64' });
+
+      // Partager le fichier
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Exporter les élèves en Excel'
+        });
+      } else {
+        Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
+      }
+
+      console.log('📊 Excel exporté:', data.length, 'élèves');
+    } catch (error: any) {
+      console.error('💥 Erreur export Excel:', error);
+      Alert.alert('Erreur', `Impossible d'exporter le fichier Excel: ${error?.message || 'Erreur inconnue'}`);
+    }
+  };
+
   // ---- recherche
   const filtered = useMemo(() => {
     let result = data;
@@ -318,6 +379,9 @@ export default function Recapitulatif() {
             </Pressable>
             <Pressable onPress={() => setFileSearchVisible(true)} accessibilityLabel="Rechercher fichier" style={{ padding: 6 }}>
               <Ionicons name="search" size={22} color="#000" />
+            </Pressable>
+            <Pressable onPress={exportToExcel} accessibilityLabel="Exporter Excel" style={{ padding: 6 }}>
+              <Ionicons name="document" size={22} color="#b40a0a" />
             </Pressable>
             <Pressable onPress={exportToCSV} accessibilityLabel="Exporter CSV" style={{ padding: 6 }}>
               <Ionicons name="download-outline" size={22} color="#000" />

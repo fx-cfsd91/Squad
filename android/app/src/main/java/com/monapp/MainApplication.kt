@@ -1,4 +1,4 @@
-package com.cfsd91.monapp
+package com.monapp
 
 import android.app.Application
 import android.content.res.Configuration
