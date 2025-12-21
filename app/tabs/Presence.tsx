@@ -83,119 +83,6 @@ export default function Presence() {
   };
 
   // Export CSV
-  const exportToCSV = async () => {
-    try {
-      console.log('📥 Clic sur export CSV détecté');
-      
-      // Filtrer les élèves présents
-      const presentIds = Object.keys(present).filter((id: string) => present[id]);
-      const presentEleves = eleves.filter((e: any) => presentIds.includes(e.id));
-      console.log('📋 Élèves présents:', presentEleves.length);
-
-      if (presentEleves.length === 0) {
-        Alert.alert('Export CSV', 'Aucun élève présent à exporter');
-        return;
-      }
-
-      // En-têtes CSV simplifiés
-      const headers = ['Nom', 'Prénom', 'Discipline', 'Jour'];
-
-      // Fonction pour échapper les valeurs CSV
-      const escapeCSV = (value: any): string => {
-        if (value === null || value === undefined) return '';
-        const str = String(value);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-
-      // Construire les lignes CSV simplifiées
-      const rows = presentEleves.map(eleve => [
-        escapeCSV(eleve.nom),
-        escapeCSV(eleve.prenom),
-        escapeCSV(eleve.discipline),
-        escapeCSV(eleve.jour)
-      ].join(','));
-
-      // Assembler le CSV
-      const csvContent = [
-        `Date de saisie,${new Date().toLocaleDateString()}`,
-        '',
-        headers.join(','),
-        ...rows
-      ].join('\n');
-
-      console.log('📄 CSV prêt, taille:', csvContent.length);
-
-      if (Platform.OS === 'web') {
-        // Sur web : créer un dialog HTML
-        const message = `${presentEleves.length} élève(s) présent(s)\n\nComment voulez-vous partager ?\n\n[1] Télécharger\n[2] Email\n[3] WhatsApp\n[4] Copier`;
-        const choice = window.prompt(message, '1');
-
-        console.log('User chose:', choice);
-
-        if (choice === '1') {
-          // Télécharger
-          const element = document.createElement('a');
-          element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
-          element.setAttribute('download', `presence_${new Date().toISOString().split('T')[0]}.csv`);
-          element.style.display = 'none';
-          document.body.appendChild(element);
-          element.click();
-          document.body.removeChild(element);
-          console.log('✅ Téléchargement web réussi');
-          Alert.alert('✅ Téléchargé', `${presentEleves.length} élève(s) téléchargé(s).`);
-        } else if (choice === '2') {
-          // Email
-          const subject = `Présences du ${new Date().toLocaleDateString()}`;
-          const body = `Élèves présents :\n\n${csvContent}`;
-          const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-          window.location.href = mailto;
-          console.log('✅ Email préparé');
-        } else if (choice === '3') {
-          // WhatsApp
-          const whatsappText = `Présences du ${new Date().toLocaleDateString()}\n\n${csvContent}`;
-          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappText)}`;
-          window.open(whatsappUrl, '_blank');
-          console.log('✅ WhatsApp ouvert');
-        } else if (choice === '4') {
-          // Copier
-          navigator.clipboard.writeText(csvContent).then(() => {
-            Alert.alert('✅ Copié', 'Le contenu CSV a été copié dans le presse-papiers');
-            console.log('✅ Copié dans le presse-papiers');
-          });
-        } else {
-          console.log('⚠️ Partage annulé');
-        }
-      } else {
-        // Sur mobile : utiliser Sharing native (Mail, WhatsApp, etc.)
-        const docDir = (FileSystem as any).documentDirectory;
-        if (typeof docDir === 'undefined' || !docDir) {
-          Alert.alert('Erreur', 'FileSystem non disponible');
-          return;
-        }
-        
-        const fileName = `presence_${new Date().toISOString().split('T')[0]}.csv`;
-        const filePath = docDir + fileName;
-        
-        console.log('💾 Création du fichier:', fileName);
-        await FileSystem.writeAsStringAsync(filePath, csvContent);
-        
-        console.log('📤 Ouverture des options de partage...');
-        await Sharing.shareAsync(filePath, {
-          mimeType: 'text/csv',
-          dialogTitle: `Partager ${presentEleves.length} élève(s) présent(s)`
-        });
-        console.log('✅ Partage mobile réussi');
-      }
-
-    } catch (error: any) {
-      console.error('❌ Erreur export:', error);
-      Alert.alert('Erreur', `Impossible d'exporter: ${error?.message || 'Erreur inconnue'}`);
-    }
-  };
-
   // ---- Export Excel (XLSX)
   const exportToExcel = async () => {
     try {
@@ -333,9 +220,6 @@ export default function Presence() {
             </Pressable>
             <Pressable onPress={exportToExcel} style={{ marginRight: 8 }}>
               <Ionicons name="document" size={22} color="#ef4444" />
-            </Pressable>
-            <Pressable onPress={exportToCSV} style={{ marginRight: 8 }}>
-              <Ionicons name="download-outline" size={22} color="#000" />
             </Pressable>
             <Pressable onPress={() => router.back()}> 
               <Ionicons name="home" size={22} color="#000" />

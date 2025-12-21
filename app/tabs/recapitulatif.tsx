@@ -151,81 +151,6 @@ export default function Recapitulatif() {
   // Fonction copyLink retirée
 
   // ---- export CSV
-  const exportToCSV = async () => {
-    try {
-      if (data.length === 0) {
-        Alert.alert('Export CSV', 'Aucune donnée à exporter');
-        return;
-      }
-
-      // En-têtes CSV
-      const headers = [
-        'ID', 'Nom', 'Prénom', 'Naissance', 'Age', 'Jour', 'Discipline', 
-        'Combattant', 'Étudiant', 'Tél. Urgence', 'Tél. Élève', 'Email', 
-        'Adresse', 'Ceinture', 'Licence', 'Date création'
-      ];
-
-      // Fonction pour échapper les valeurs CSV
-      const escapeCSV = (value: any): string => {
-        if (value === null || value === undefined) return '';
-        const str = String(value);
-        // Si contient virgule, guillemet ou saut de ligne, encadrer avec guillemets
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-
-      // Construire les lignes CSV
-      const rows = data.map(eleve => [
-        escapeCSV(eleve.id),
-        escapeCSV(eleve.nom),
-        escapeCSV(eleve.prenom),
-        escapeCSV(eleve.naissance),
-        escapeCSV(eleve.age),
-        escapeCSV(eleve.jour),
-        escapeCSV(eleve.discipline),
-        escapeCSV(eleve.combattant ? 'Oui' : 'Non'),
-        escapeCSV(eleve.etudiant ? 'Oui' : 'Non'),
-        escapeCSV(eleve.telUrgence),
-        escapeCSV(eleve.telEleve),
-        escapeCSV(eleve.email),
-        escapeCSV(eleve.adresse),
-        escapeCSV(eleve.ceinture),
-        escapeCSV(eleve.licence),
-        escapeCSV(eleve.createdAt)
-      ].join(','));
-
-      // Assembler le CSV complet
-      const csvContent = [headers.join(','), ...rows].join('\n');
-
-      // Sauvegarder le fichier dans le cache (compatible avec toutes les versions)
-      const fileName = `eleves_cfsd91_${new Date().toISOString().split('T')[0]}.csv`;
-
-      // Créer un blob et partager
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const fileUri = Platform.OS === 'ios'
-        ? `file:///tmp/${fileName}`
-        : `file://${require('react-native').NativeModules.ReactNativeFS?.DocumentDirectoryPath || '/tmp'}/${fileName}`;
-
-      // Partager le fichier
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'text/csv',
-          dialogTitle: 'Exporter les élèves en CSV'
-        });
-      } else {
-        Alert.alert('Export CSV', `Fichier sauvegardé: ${fileName}`);
-      }
-
-      console.log('📊 CSV exporté:', data.length, 'élèves');
-    } catch (error: any) {
-      console.error('💥 Erreur export CSV:', error);
-      Alert.alert('Erreur', `Impossible d'exporter le CSV: ${error?.message || 'Erreur inconnue'}`);
-    }
-  };
-
   // ---- export Excel (XLSX)
   const exportToExcel = async () => {
     try {
@@ -426,9 +351,6 @@ export default function Recapitulatif() {
             </Pressable>
             <Pressable onPress={exportToExcel} accessibilityLabel="Exporter Excel" style={{ padding: 6 }}>
               <Ionicons name="document" size={22} color="#b40a0a" />
-            </Pressable>
-            <Pressable onPress={exportToCSV} accessibilityLabel="Exporter CSV" style={{ padding: 6 }}>
-              <Ionicons name="download-outline" size={22} color="#000" />
             </Pressable>
             <Pressable onPress={() => router.back()} accessibilityLabel="Retour" style={{ padding: 6 }}>
               <Ionicons name="arrow-back" size={22} color="#000" />
