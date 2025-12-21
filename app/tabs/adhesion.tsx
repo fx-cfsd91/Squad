@@ -6,6 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
 import * as FileSystemLegacy from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
@@ -80,6 +81,36 @@ export default function Adhesion() {
   const [eleves, setEleves] = useState<Eleve[]>([]);
   
   // Jours et disciplines utilisés par le formulaire
+    // Compresser une image (max 500KB)
+    const compressImage = async (uri: string): Promise<string> => {
+      try {
+        console.log('🖼️ Compression de la photo...');
+        
+        // Étape 1: Redimensionner et compresser
+        const manipResult = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 800, height: 800 } }], { 
+          compress: 0.7, 
+          format: ImageManipulator.SaveFormat.JPEG 
+        });
+        
+        console.log('✅ Photo compressée:', manipResult.uri);
+        
+        // Étape 2: Convertir en base64
+        const base64 = await FileSystem.readAsStringAsync(manipResult.uri, { encoding: 'base64' });
+        const sizeKB = (base64.length * 0.75) / 1024; // Approximation de la taille en KB
+        
+        console.log(`📊 Taille finale: ${sizeKB.toFixed(0)} KB`);
+        
+        if (sizeKB > 500) {
+          Alert.alert('Attention', `La photo pèse ${sizeKB.toFixed(0)} KB. Essayez une photo plus petite.`);
+        }
+        
+        return base64;
+      } catch (error) {
+        console.error('Erreur compression:', error);
+        throw error;
+      }
+    };
+
     // Sélectionner une photo depuis la galerie
     const pickPhoto = async () => {
       try {
@@ -91,16 +122,14 @@ export default function Adhesion() {
         const res = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           quality: 0.6,
-          base64: Platform.OS === 'web', // Demande le base64 directement sur web
+          base64: Platform.OS === 'web',
         });
         const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
-        // Sur web, on récupère directement le base64
-        if (Platform.OS === 'web') {
-          const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
-          if (base64) setPhoto(base64);
-        } else if (uri) {
-          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-          setPhoto(base64);
+        
+        // Compresser l'image avant utilisation
+        if (uri) {
+          const compressedBase64 = await compressImage(uri);
+          setPhoto(compressedBase64);
         }
       } catch (e) {
         console.error('pickPhoto error', e);
