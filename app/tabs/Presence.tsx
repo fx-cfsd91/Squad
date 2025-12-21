@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, Image, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as XLSX from 'xlsx';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
 import { Eleve, Presence as PresenceType } from '../../constants/types';
@@ -195,6 +196,96 @@ export default function Presence() {
     }
   };
 
+  // ---- Export Excel (XLSX)
+  const exportToExcel = async () => {
+    try {
+      const presentEleves = filtered.filter(e => present[e.id]);
+      console.log('DEBUG: exportToExcel appelée, présents =', presentEleves.length);
+      
+      if (presentEleves.length === 0) {
+        Alert.alert('Erreur', 'Aucun élève présent à exporter');
+        return;
+      }
+
+      // Préparer les données pour Excel (juste 3 colonnes)
+      const excelData = presentEleves.map(eleve => ({
+        'Prénom': eleve.prenom,
+        'Nom': eleve.nom,
+        'Jour': eleve.jour || ''
+      }));
+
+      console.log('DEBUG: excelData préparée, éléments:', excelData.length);
+
+      // Créer un workbook
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Présence');
+
+      console.log('DEBUG: workbook créé');
+
+      // Générer le fichier en base64
+      const fileName = `presence_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      
+      console.log('DEBUG: fichier généré, fileName =', fileName);
+
+      // Sur le web : créer un lien de téléchargement
+      if (Platform.OS === 'web') {
+        const binaryString = atob(wbout);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        
+        // Créer un lien et simuler le clic
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('📊 Excel téléchargé:', presentEleves.length, 'élèves');
+        Alert.alert('Export Excel', `${presentEleves.length} élève(s) exporté(s)`);
+      } else {
+        // Sur mobile : utiliser le FileSystem et Sharing
+        const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '';
+        const fileUri = cacheDir ? `${cacheDir}${fileName}` : fileName;
+        
+        console.log('DEBUG: tentative sauvegarde à', fileUri);
+        
+        try {
+          await (FileSystem as any).writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
+        } catch (e) {
+          console.warn('Fallback: écriture directe');
+        }
+
+        console.log('DEBUG: fichier sauvegardé');
+
+        // Partager le fichier
+        const isAvailable = await Sharing.isAvailableAsync();
+        console.log('DEBUG: Sharing disponible?', isAvailable);
+        
+        if (isAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: `Exporter ${presentEleves.length} présence(s)`
+          });
+        } else {
+          Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
+        }
+
+        console.log('📊 Excel exporté:', presentEleves.length, 'élèves');
+      }
+    } catch (error: any) {
+      console.error('💥 Erreur export Excel:', error);
+      Alert.alert('Erreur', `Impossible d'exporter: ${error?.message || 'Erreur inconnue'}`);
+    }
+  };
+
   const filtered = eleves.filter(e => {
     const q = search.trim().toLowerCase();
     return !q || [e.nom, e.prenom, e.discipline, e.jour].join(' ').toLowerCase().includes(q);
@@ -239,6 +330,9 @@ export default function Presence() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Pressable onPress={resetPresence} style={{ marginRight: 8 }}>
               <Ionicons name="refresh-outline" size={22} color="#000" />
+            </Pressable>
+            <Pressable onPress={exportToExcel} style={{ marginRight: 8 }}>
+              <Ionicons name="document" size={22} color="#ef4444" />
             </Pressable>
             <Pressable onPress={exportToCSV} style={{ marginRight: 8 }}>
               <Ionicons name="download-outline" size={22} color="#000" />
