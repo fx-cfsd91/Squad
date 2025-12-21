@@ -78,6 +78,7 @@ export default function Adhesion() {
   const [isReglementLu, setIsReglementLu] = useState(false);
   
   const [loading,setLoading]=useState(false);
+  const [showPasswordInfo, setShowPasswordInfo] = useState(false);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   
   // Jours et disciplines utilisés par le formulaire
@@ -252,6 +253,60 @@ export default function Adhesion() {
   
   return (
     <View style={{ flex: 1 }}>
+      {/* Modal - Information mot de passe */}
+      {showPasswordInfo && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, marginHorizontal: 20, maxHeight: '80%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Règles du mot de passe</Text>
+              <Pressable onPress={() => setShowPasswordInfo(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </Pressable>
+            </View>
+            
+            <ScrollView style={{ maxHeight: '90%' }}>
+              <Text style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
+                Votre mot de passe doit respecter les critères suivants :
+              </Text>
+              
+              <View style={{ marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 13, color: '#333' }}>Minimum 8 caractères</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 13, color: '#333' }}>Au moins 1 majuscule (A-Z)</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 13, color: '#333' }}>Au moins 1 minuscule (a-z)</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 13, color: '#333' }}>Au moins 1 chiffre (0-9)</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 13, color: '#333' }}>Au moins 1 caractère spécial (!@#$%^&...)</Text>
+                </View>
+              </View>
+              
+              <Text style={{ fontSize: 12, color: '#999', marginTop: 12, fontStyle: 'italic' }}>
+                Exemple : Password123! ✓
+              </Text>
+            </ScrollView>
+            
+            <Pressable 
+              onPress={() => setShowPasswordInfo(false)} 
+              style={{ backgroundColor: '#007AFF', paddingVertical: 12, borderRadius: 8, marginTop: 16, alignItems: 'center' }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>Compris</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+      
       {/* Section selfie/caméra supprimée - état stable */}
       <HeaderBar
         title="Adhésion"
@@ -352,7 +407,12 @@ export default function Adhesion() {
               </View>
             </View>
             {/* Mot de passe sous Nom/Prénom */}
-            <Text style={s.lbl}>Mot de passe <Text style={{color:'#ef4444'}}>*</Text></Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={s.lbl}>Mot de passe <Text style={{color:'#ef4444'}}>*</Text></Text>
+              <Pressable onPress={() => setShowPasswordInfo(true)} style={{ padding: 8 }}>
+                <Ionicons name="information-circle" size={20} color="#007AFF" />
+              </Pressable>
+            </View>
             <TextInput
               style={s.inp}
               value={password}

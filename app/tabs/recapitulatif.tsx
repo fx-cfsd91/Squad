@@ -15,6 +15,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as XLSX from 'xlsx';
@@ -37,6 +38,18 @@ type Eleve = {
 };
 
 export default function Recapitulatif() {
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 600;
+  const isTablet = width >= 600 && width < 1024;
+  const isDesktop = width >= 1024;
+  const containerPadding = 24; // FlatList content padding left+right
+  const columnGap = 12;
+  const innerWidth = Math.max(width - containerPadding, 320);
+  const minCardWidth = 140; // largeur mini d'une carte (réduit pour plus de colonnes)
+  const numColumns = isSmallScreen ? 2 : Math.max(1, Math.min(12, Math.floor((innerWidth + columnGap) / (minCardWidth + columnGap))));
+  const cardWidth = Math.floor((innerWidth - columnGap * (numColumns - 1)) / numColumns);
+  const photoSize = Math.max(48, Math.min(96, Math.round(cardWidth * 0.28)));
+  
   const [data, setData] = useState<Eleve[]>([]);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,34 +64,36 @@ export default function Recapitulatif() {
   // ---- actions serveur uniquement
   const fetchFromServer = async () => {
     try {
-      setLoading(true); setLastError('');
+      setLoading(true);
+      setLastError('');
+      console.log('🌐 Chargement des élèves...');
+      
       const r = await fetch(REMOTE_JSON_URL, {
-        cache: 'no-store',
+        cache: 'force-cache', // Utiliser le cache HTTP agressivement
         headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
       });
+      
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      
       let arrRaw: any = await r.json();
       console.log('Server response fetchFromServer type:', typeof arrRaw, Object.keys(arrRaw || {}));
+      
       let arr: Eleve[] = [];
       if (Array.isArray(arrRaw)) arr = arrRaw;
       else if (arrRaw && Array.isArray(arrRaw.data)) arr = arrRaw.data;
       else if (arrRaw && Array.isArray(arrRaw.eleves)) arr = arrRaw.eleves;
       else if (arrRaw && Array.isArray(arrRaw.results)) arr = arrRaw.results;
       else {
-        // try to coerce if it's a string containing JSON array
         try { const parsed = JSON.parse(String(arrRaw)); if (Array.isArray(parsed)) arr = parsed; } catch(_){}
       }
+      
       if (!Array.isArray(arr)) throw new Error('JSON inattendu (tableau)');
+      
       setData(arr);
-      setLastSyncTime(new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      // Écrire la copie locale `eleves.json` dans le FileSystem pour contourner
-      // les limites d'AsyncStorage/SQLite sur Android (Row too big...).
-      // Note: writeAsStringAsync est dépréciée - ignorer les erreurs de FileSystem
-      try {
-        // Sauts optionnel - on a déjà les données en mémoire
-      } catch (fsErr) {
-        // FileSystem deprecated - ignore
-      }
+      const now = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSyncTime(now);
+      console.log('✅ Élèves chargés:', arr.length);
+      
       Alert.alert('Import OK', `${arr.length} enregistrements depuis le serveur`);
     } catch (e: any) {
       setLastError('IMPORT: ' + (e?.message || 'Erreur'));
@@ -294,17 +309,19 @@ export default function Recapitulatif() {
   const loadElevesFromServer = async () => {
     try {
       setLoading(true);
-      console.log('📊 Récap - Chargement depuis le serveur...');
-      console.log('🔑 Headers envoyés:', API_HEADERS);
+      console.log('🌐 Chargement des élèves...');
       
       const r = await fetch(REMOTE_JSON_URL, {
-        cache: 'no-store',
+        cache: 'force-cache', // Utiliser le cache HTTP agressivement
         headers: API_HEADERS
       });
+      
       console.log('📡 Réponse status:', r.status);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      
       let arrRaw: any = await r.json();
       console.log('Server response loadElevesFromServer type:', typeof arrRaw, Object.keys(arrRaw || {}));
+      
       let arr: Eleve[] = [];
       if (Array.isArray(arrRaw)) arr = arrRaw;
       else if (arrRaw && Array.isArray(arrRaw.data)) arr = arrRaw.data;
@@ -315,14 +332,15 @@ export default function Recapitulatif() {
       }
       if (!Array.isArray(arr)) throw new Error('JSON inattendu');
 
-      console.log('📊 Récap - Chargé:', arr.length, 'élèves depuis le serveur');
+      console.log('✅ Chargé:', arr.length, 'élèves');
       setData(arr);
-      setLastSyncTime(new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      const now = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSyncTime(now);
     } catch (error: any) {
-      console.error('💥 Erreur chargement élèves:', error);
+      console.error('❌ Erreur chargement:', error);
       setData([]);
       setLastError(error?.message || 'Erreur');
-      Alert.alert('Erreur', `Impossible de charger les élèves depuis le serveur: ${error?.message || 'Erreur inconnue'}`);
+      Alert.alert('Erreur', `Impossible de charger les élèves: ${error?.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
@@ -432,9 +450,12 @@ export default function Recapitulatif() {
 
       {/* liste */}
       <FlatList
+        key={numColumns}
         data={filtered}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 12 }}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12, justifyContent: 'flex-start' } : undefined}
         removeClippedSubviews={false}
         maxToRenderPerBatch={50}
         updateCellsBatchingPeriod={100}
@@ -464,38 +485,45 @@ export default function Recapitulatif() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={[s.rowCard, { position: 'relative' }]}>
+          <View style={[s.rowCard, { position: 'relative', width: cardWidth }]}>
             <Pressable 
-              style={{ flexDirection: 'row', gap: 12, paddingRight: 60 }}
+              style={{ gap: 8, paddingRight: 60 }}
               onPress={() => {
                 console.log('ID transmis à la fiche:', item.id);
                 router.push(`/tabs/fiche/${item.id}`);
               }}
             >
-              {item.photo ? (
-                <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={s.photo} />
-              ) : (
-                <View style={[s.photo, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}> 
-                  <Ionicons name="person" size={24} color="#777" />
-                </View>
-              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {item.photo ? (
+                  <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={[s.photo, { width: photoSize, height: photoSize }]} />
+                ) : (
+                  <View style={[s.photo, { width: photoSize, height: photoSize, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}> 
+                    <Ionicons name="person" size={24} color="#777" />
+                  </View>
+                )}
+              </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.name}>{item.prenom} {item.nom}</Text>
-                <Text style={s.muted}>📋 {item.discipline || 'Non spécifié'}</Text>
+                <Text style={[s.name, s.fullWidth, Platform.OS === 'web' ? ({ whiteSpace: 'normal' } as any) : undefined]}>{item.prenom} {item.nom}</Text>
+                <Text style={[s.muted, s.fullWidth]}>📋 {item.discipline || 'Non spécifié'}</Text>
                 {item.licence && (
-                  <Text style={s.mutedSmall}>🏷️ N° {item.licence}</Text>
+                  <Text style={[s.mutedSmall, s.fullWidth]}>🏷️ N° {item.licence}</Text>
                 )}
                 {item.age && (
-                  <Text style={s.mutedSmall}>🎂 {item.age} ans</Text>
+                  <Text style={[s.mutedSmall, s.fullWidth]}>🎂 {item.age} ans</Text>
                 )}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
-                  <Text style={s.mutedSmall}>📞 U: {item.telUrgence || 'Non renseigné'}</Text>
+                <View style={{ marginTop: 4 }}>
+                  <Text style={[s.mutedSmall, s.fullWidth]}>📞 U: {item.telUrgence || 'Non renseigné'}</Text>
                 </View>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  <Text style={s.mutedSmall}>📱 E: {item.telEleve || 'Non renseigné'}</Text>
+                <View>
+                  <Text style={[s.mutedSmall, s.fullWidth]}>📱 E: {item.telEleve || 'Non renseigné'}</Text>
                 </View>
                 {!!item.email && (
-                  <Text style={[s.mutedSmall, { color: '#4ade80', marginTop: 2 }]}>✉️ {item.email}</Text>
+                  <Text style={[
+                    s.mutedSmall,
+                    s.fullWidth,
+                    { color: '#4ade80', marginTop: 2 },
+                    Platform.OS === 'web' ? ({ wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'normal' } as any) : undefined
+                  ]}>✉️ {item.email}</Text>
                 )}
               </View>
             </Pressable>
@@ -583,6 +611,7 @@ const s = StyleSheet.create({
   name: { color: '#fff', fontWeight: '700', fontSize: 16, marginBottom: 4 },
   muted: { color: '#9ca3af', fontSize: 14, marginBottom: 2 },
   mutedSmall: { color: '#9ca3af', fontSize: 12, marginBottom: 1, lineHeight: 16 },
+  fullWidth: { width: '100%' },
   photo: {
     width: 70, height: 70, borderRadius: 12,
     borderWidth: 1, borderColor: '#64748b', backgroundColor: '#0b0b0b'
