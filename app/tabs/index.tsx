@@ -21,6 +21,7 @@ import {
   View
 } from 'react-native';
 import { API_CONFIG } from '../../constants/config';
+import { fetchCourses, fetchEvents } from '../../lib/api';
 
 dayjs.locale('fr');
 
@@ -107,24 +108,8 @@ export default function Home() {
   
   const loadCoursesData = async () => {
     try {
-      const response = await fetch(API_CONFIG.COURSES_URL, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-API-KEY': 'Mac131080',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[DEBUG] Courses chargées:', data);
-        // Handle both array and object response format
-        const courses = Array.isArray(data) ? { courses: data } : data;
-        setCoursesData(courses);
-      } else {
-        console.error('[DEBUG] Erreur courses:', response.status, response.statusText);
-        setCoursesData({ courses: [] });
-      }
+      const data = await fetchCourses();
+      setCoursesData({ courses: data });
     } catch (error) {
       console.error('[DEBUG] Erreur fetch courses:', error);
       setCoursesData({ courses: [] });
@@ -133,24 +118,8 @@ export default function Home() {
 
   const loadEventsData = async () => {
     try {
-      const response = await fetch(API_CONFIG.EVENTS_URL, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-API-KEY': 'Mac131080',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[DEBUG] Events chargés:', data);
-        // Handle both array and object response format
-        const events = Array.isArray(data) ? { events: data } : data;
-        setEventsData(events);
-      } else {
-        console.error('[DEBUG] Erreur events:', response.status, response.statusText);
-        setEventsData({ events: [] });
-      }
+      const data = await fetchEvents();
+      setEventsData({ events: data });
     } catch (error) {
       console.error('[DEBUG] Erreur fetch events:', error);
       setEventsData({ events: [] });
