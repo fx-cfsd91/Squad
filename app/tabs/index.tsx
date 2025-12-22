@@ -448,25 +448,26 @@ export default function Home() {
             </Pressable>
           </View>
           <View style={s.coursesGrid}>
-            {coursesData && coursesData.courses && getNext3Courses().map((course, index) => (
-              <Pressable key={`course-${index}`} style={s.courseItemCompact} onPress={() => openCourseDetails(course)}>
-                <View style={s.courseCompactHeader}>
-                  <Text style={s.courseDateCompact}>{course.dateFormatted}</Text>
-                  <Text style={s.courseDayCompact}>{course.dayName}</Text>
-                </View>
-                <Text style={s.courseTitleCompact}>{course.title}</Text>
-                <View style={s.courseTimeRowCompact}>
-                  <Ionicons name="time-outline" size={9} color="#64748b" />
-                  <Text style={s.courseTimeCompact}>{course.startTime}</Text>
-                </View>
-                {course.isCanceled && (
-                  <View style={s.canceledBadgeCompact}>
-                    <Text style={s.canceledTextCompact}>Annulé</Text>
+            <React.Fragment>
+              {coursesData && coursesData.courses && getNext3Courses().map((course, index) => (
+                <Pressable key={`course-${index}`} style={s.courseItemCompact} onPress={() => openCourseDetails(course)}>
+                  <View style={s.courseCompactHeader}>
+                    <Text style={s.courseDateCompact}>{course.dateFormatted}</Text>
+                    <Text style={s.courseDayCompact}>{course.dayName}</Text>
                   </View>
-                )}
-              </Pressable>
-            ))}
-            {eventsData && eventsData.events && getNext3Events().map((event: any, index: number) => {
+                  <Text style={s.courseTitleCompact}>{course.title}</Text>
+                  <View style={s.courseTimeRowCompact}>
+                    <Ionicons name="time-outline" size={9} color="#64748b" />
+                    <Text style={s.courseTimeCompact}>{course.startTime}</Text>
+                  </View>
+                  {course.isCanceled && (
+                    <View style={s.canceledBadgeCompact}>
+                      <Text style={s.canceledTextCompact}>Annulé</Text>
+                    </View>
+                  )}
+                </Pressable>
+              ))}
+              {eventsData && eventsData.events && getNext3Events().map((event: any, index: number) => {
               const EVENT_COLORS = {
                 competition: '#ef4444',
                 stage: '#f59e0b',
@@ -508,6 +509,7 @@ export default function Home() {
                 </Pressable>
               );
             })}
+            </React.Fragment>
           </View>
         </View>
 
