@@ -73,7 +73,10 @@ export default function EventsScreen() {
     setEditingEvent(event);
     setTitle(event.title);
     setSelectedType(event.type);
-    setDate(event.date);
+    // Convertir AAAA-MM-JJ en JJ-MM-AAAA pour l'affichage
+    const dateParts = event.date.split('-');
+    const displayDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : event.date;
+    setDate(displayDate);
     setStartTime(event.startTime || '');
     setEndTime(event.endTime || '');
     setLocation(event.location || '');
@@ -92,17 +95,30 @@ export default function EventsScreen() {
       return;
     }
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-      Alert.alert('Erreur', 'Format de date invalide. Utilisez AAAA-MM-JJ');
-      return;
+    // Support des formats JJ-MM-AAAA ou JJ/MM/AAAA (français)
+    const frenchDateRegex = /^(\d{2})[-\/](\d{2})[-\/](\d{4})$/;
+    let formattedDate = date;
+    
+    const frenchMatch = date.match(frenchDateRegex);
+    if (frenchMatch) {
+      // Convertir JJ-MM-AAAA en AAAA-MM-JJ
+      const [_, day, month, year] = frenchMatch;
+      formattedDate = `${year}-${month}-${day}`;
+    } else {
+      // Vérifier le format AAAA-MM-JJ (si l'utilisateur saisit quand même ce format)
+      const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!isoDateRegex.test(date)) {
+        Alert.alert('Erreur', 'Format de date invalide. Utilisez JJ-MM-AAAA (ex: 25-12-2025)');
+        return;
+      }
+      formattedDate = date;
     }
 
     try {
       const eventData = {
         title: title.trim(),
         type: selectedType as any,
-        date,
+        date: formattedDate,
         startTime: startTime || undefined,
         endTime: endTime || undefined,
         location: location || undefined,
@@ -137,7 +153,7 @@ export default function EventsScreen() {
   };
 
   const handleDeleteEvent = async (event: Event) => {
-    console.log('🗑️  handleDeleteEvent called with event:', event);
+
     setEventToDelete(event);
     setDeleteModalVisible(true);
   };
@@ -265,7 +281,8 @@ export default function EventsScreen() {
                         <View style={s.eventInfo}>
                           <Ionicons name="time-outline" size={14} color="#64748b" />
                           <Text style={[s.eventInfoText, !event.visible && s.inactiveText]}>
-                            {event.startTime} {event.endTime && `- ${event.endTime}`}
+                            {event.startTime}
+                            {event.endTime ? ` - ${event.endTime}` : ''}
                           </Text>
                         </View>
                       )}
@@ -373,15 +390,18 @@ export default function EventsScreen() {
               </View>
 
               {/* Date */}
-              <Text style={s.label}>Date (AAAA-MM-JJ)</Text>
+              <Text style={s.label}>Date (JJ-MM-AAAA)</Text>
               <TextInput
-                style={s.input}
-                placeholder="2025-12-25"
+                style={[s.input, date && !/^(\d{0,2})([-/]?)(\d{0,2})([-/]?)(\d{0,4})$/.test(date) && { borderColor: '#ef4444', borderWidth: 1 }]}
+                placeholder="25-12-2025"
                 placeholderTextColor="#6b7280"
                 value={date}
                 onChangeText={setDate}
                 keyboardType="numbers-and-punctuation"
               />
+              {date && !/^(\d{2})[-/](\d{2})[-/](\d{4})$/.test(date) && !/^\d{4}-\d{2}-\d{2}$/.test(date) && date.length >= 8 && (
+                <Text style={{ color: '#ef4444', fontSize: 11, marginTop: 2 }}>Format: JJ-MM-AAAA (ex: 25-12-2025)</Text>
+              )}
 
               {/* Horaires */}
               <Text style={s.label}>Heure de début (HH:MM, optionnel)</Text>

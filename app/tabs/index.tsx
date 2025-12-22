@@ -26,16 +26,14 @@ import { fetchCourses, fetchEvents } from '../../lib/api';
 dayjs.locale('fr');
 
 const { height } = Dimensions.get('window');
-// bande noire bas
 const TILE_HEIGHT = 120;
 
-// Calcule la hauteur optimale des tuiles selon le nombre affiché
 const getTileHeight = (cardCount: number) => {
-  if (cardCount <= 2) return 200; // Beaucoup plus grandes tuiles pour 1-2 cartes (mode élève)
-  if (cardCount <= 3) return 150; // Tuiles moyennes pour 3 cartes
-  if (cardCount <= 4) return 120; // Tuiles standards pour 4 cartes
-  if (cardCount <= 6) return 90;  // Tuiles plus petites pour 5-6 cartes (mode admin)
-  return 80; // Tuiles très petites pour 7+ cartes
+  if (cardCount <= 2) return 200;
+  if (cardCount <= 3) return 150;
+  if (cardCount <= 4) return 120;
+  if (cardCount <= 6) return 90;
+  return 80;
 };
 
 /* ===== Vacances Zone C ===== */
@@ -55,13 +53,12 @@ const isHoliday = (d: dayjs.Dayjs) =>
 
 const dayIndexMonday0 = (d: dayjs.Dayjs) => ((d.day() + 6) % 7);
 
-/* ===== Admin config ===== */
-const ADMIN_PIN = '3107';                         // <- PIN admin personnalisé
-const KEY_ADMIN = 'cfsd91_admin_enabled';         // stockage local
+const ADMIN_PIN = '3107';
+const KEY_ADMIN = 'cfsd91_admin_enabled';
 const KEY_IDENTIFIE = 'cfsd91_identifie';
 
 export default function Home() {
-  const [admin, setAdmin] = useState<boolean>(false);     // état admin
+  const [admin, setAdmin] = useState<boolean>(false);
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState('');
   const [identifie, setIdentifie] = useState<boolean>(false);
@@ -80,14 +77,11 @@ export default function Home() {
       const id = await AsyncStorage.getItem(KEY_IDENTIFIE);
       setIdentifie(id === '1');
       
-      // Charger le contenu de courses.json
       loadCoursesData();
-      // Charger les événements
       loadEventsData();
     })();
   }, []);
 
-  // Recharger l'état d'identification quand la page reprend le focus
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -97,7 +91,6 @@ export default function Home() {
         if (eleveId) {
           try {
             setEleveData(JSON.parse(eleveId));
-            console.log('✅ Élève identifié:', JSON.parse(eleveId)?.prenom);
           } catch (e) {
             console.error('Erreur parsing élève:', e);
           }
@@ -111,7 +104,7 @@ export default function Home() {
       const data = await fetchCourses();
       setCoursesData({ courses: data });
     } catch (error) {
-      console.error('[DEBUG] Erreur fetch courses:', error);
+      console.error('Erreur fetch courses:', error);
       setCoursesData({ courses: [] });
     }
   };
@@ -121,16 +114,14 @@ export default function Home() {
       const data = await fetchEvents();
       setEventsData({ events: data });
     } catch (error) {
-      console.error('[DEBUG] Erreur fetch events:', error);
+      console.error('Erreur fetch events:', error);
       setEventsData({ events: [] });
     }
   };
 
-  // Rafraîchir l'état d'identification à chaque fois que la page devient active
   useFocusEffect(
     useCallback(() => {
       (async () => {
-        // Recharger l'état d'identification
         const id = await AsyncStorage.getItem(KEY_IDENTIFIE);
         setIdentifie(id === '1');
         if (id === '1') {
@@ -139,7 +130,6 @@ export default function Home() {
         } else {
           setEleveData(null);
         }
-        // Refresh auto des prochains cours et événements
         await loadCoursesData();
         await loadEventsData();
       })();
@@ -171,18 +161,16 @@ export default function Home() {
   // Calculer la hauteur des tuiles selon le nombre de cartes
   const tileHeight = useMemo(() => getTileHeight(cards.length), [cards.length]);
   
-  // Ajuster la taille du texte selon le nombre de cartes
   const titleFontSize = useMemo(() => {
-    if (cards.length <= 2) return 26; // Texte beaucoup plus grand pour 1-2 cartes (mode élève)
-    if (cards.length <= 3) return 20; // Texte moyen pour 3 cartes
-    return 18; // Texte plus petit pour 4+ cartes
+    if (cards.length <= 2) return 26;
+    if (cards.length <= 3) return 20;
+    return 18;
   }, [cards.length]);
 
-  // Ajuster les marges selon le nombre de cartes
   const tileMargin = useMemo(() => {
-    if (cards.length <= 2) return 20; // Beaucoup plus d'espacement pour 1-2 cartes (mode élève)
-    if (cards.length <= 3) return 14; // Espacement moyen pour 3 cartes
-    return 12; // Espacement standard pour 4+ cartes
+    if (cards.length <= 2) return 20;
+    if (cards.length <= 3) return 14;
+    return 12;
   }, [cards.length]);
 
   // Déterminer le mode actuel pour l'affichage
@@ -200,7 +188,6 @@ export default function Home() {
   }, [admin, identifie, eleveData]);
 
   const handleTilePress = (c: typeof cards[number]) => {
-    // Les cartes sont maintenant filtrées, donc toutes les cartes visibles sont accessibles
     c.onPress();
   };
 
@@ -270,8 +257,14 @@ export default function Home() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return eventsData.events
-      .filter((event: any) => event.visible && new Date(event.date) >= today)
+    const filtered = eventsData.events
+      .filter((event: any) => {
+        if (!event || !event.date) return false;
+        const eventDate = new Date(event.date);
+        const isVisible = event.visible !== false;
+        const isFuture = eventDate >= today;
+        return isVisible && isFuture;
+      })
       .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 3)
       .map((event: any) => ({
@@ -282,6 +275,8 @@ export default function Home() {
         }),
         dayName: new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'short' }),
       }));
+      
+    return filtered;
   };
 
   // Calculer les 3 prochaines compétitions uniquement
@@ -881,7 +876,7 @@ const s = StyleSheet.create({
   },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
   tileCenter: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
-  tileTitle: { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 1, textAlign: 'center', textTransform: 'uppercase', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  tileTitle: { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 1, textAlign: 'center', textTransform: 'uppercase', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 } as any,
   // Optionnel : réduire la taille du texte si besoin
   // tileTitle: { ...tileTitle, fontSize: 16 },
   tileSub: { marginTop: 5, color: '#e5e7eb', fontSize: 12, fontWeight: '600' },

@@ -173,9 +173,7 @@ export default function Adhesion() {
   }, []);
   
   const onSubmit = async()=>{
-    console.log('DEBUG: onSubmit appelée, isReglementLu =', isReglementLu);
-    if(!isReglementLu){
-      console.log('DEBUG: Affichage alerte règlement');
+    if (!isReglementLu) {
       alert('Vous devez accepter le règlement intérieur du CFSD91.');
       return;
     }
