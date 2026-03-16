@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HeaderBar from '../../components/header-bar';
-import { API_CONFIG, BELT_COLORS } from '../../constants/config';
-import { BeltTechnique, EvaluationData } from '../../constants/types';
+import { API_CONFIG } from '../../constants/config';
 
 const BELTS_BY_DISCIPLINE: { [key: string]: string[] } = {
   MMA: ['Jaune', 'Orange', 'Verte', 'Bleue', 'Violette', 'Marron', 'Noire I'],
@@ -72,10 +71,10 @@ export default function Evaluations() {
       }
 
       const fileName = `${filePrefix}${fileBelt}.json`;
-      const url = `${API_CONFIG.EVALUATIONS_URL}/${fileName}`;
+      const url = `${API_CONFIG.EVALUATIONS_URL}/${fileName}?v=${Date.now()}`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) {
           setTechniques([]);
         } else {
