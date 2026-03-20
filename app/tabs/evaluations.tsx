@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HeaderBar from '../../components/header-bar';
 import { API_CONFIG } from '../../constants/config';
@@ -34,6 +34,82 @@ const isSectionHeader = (line: string): boolean => {
 
 const isScenarioTitle = (line: string): boolean => /^\d+\s*:/.test(line.trim());
 
+type SectionContent =
+  | { kind: 'scenario'; title: string; items: string[] }
+  | { kind: 'item'; text: string };
+
+type EvaluationSection = {
+  id: string;
+  title: string;
+  contents: SectionContent[];
+};
+
+const buildEvaluationSections = (techniques: string[]): EvaluationSection[] => {
+  const sections: EvaluationSection[] = [];
+  let currentSection: EvaluationSection | null = null;
+  let currentScenario: { title: string; items: string[] } | null = null;
+
+  const ensureSection = (title = 'Général') => {
+    if (!currentSection) {
+      currentSection = {
+        id: `${title.toLowerCase().replace(/\s+/g, '-')}-${sections.length}`,
+        title,
+        contents: [],
+      };
+    }
+  };
+
+  const flushSection = () => {
+    if (!currentSection) return;
+    if (currentSection.contents.length > 0) {
+      sections.push(currentSection);
+    }
+    currentSection = null;
+  };
+
+  const flushScenario = () => {
+    if (!currentScenario) return;
+    ensureSection();
+    currentSection!.contents.push({ kind: 'scenario', title: currentScenario.title, items: currentScenario.items });
+    currentScenario = null;
+  };
+
+  for (const raw of techniques) {
+    const line = raw?.trim();
+    if (!line) continue;
+
+    if (isScenarioTitle(line)) {
+      flushScenario();
+      ensureSection();
+      currentScenario = { title: line, items: [] };
+      continue;
+    }
+
+    if (isSectionHeader(line)) {
+      flushScenario();
+      flushSection();
+      const title = line.replace(/\s*:\s*$/, '');
+      currentSection = {
+        id: `${title.toLowerCase().replace(/\s+/g, '-')}-${sections.length}`,
+        title,
+        contents: [],
+      };
+      continue;
+    }
+
+    if (currentScenario) {
+      currentScenario.items.push(line);
+    } else {
+      ensureSection();
+      currentSection!.contents.push({ kind: 'item', text: line });
+    }
+  }
+
+  flushScenario();
+  flushSection();
+  return sections;
+};
+
 export default function Evaluations() {
   const router = useRouter();
   const [discipline, setDiscipline] = useState<string>('MMA');
@@ -41,13 +117,19 @@ export default function Evaluations() {
   const [beltModalVisible, setBeltModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [techniques, setTechniques] = useState<string[]>([]);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const beltsToShow = BELTS_BY_DISCIPLINE[discipline] || BELTS_BY_DISCIPLINE['MMA'];
+  const evaluationSections = useMemo(() => buildEvaluationSections(techniques), [techniques]);
 
   useEffect(() => {
     const newBelts = BELTS_BY_DISCIPLINE[discipline] || BELTS_BY_DISCIPLINE['MMA'];
     setSelectedBelt(newBelts[0]);
   }, [discipline]);
+
+  useEffect(() => {
+    setExpandedSections({});
+  }, [discipline, selectedBelt]);
 
   useEffect(() => {
     const fetchTechniques = async () => {
@@ -187,20 +269,42 @@ export default function Evaluations() {
                   <Text style={styles.metaChip}>{discipline}</Text>
                   <Text style={styles.metaChip}>{selectedBelt}</Text>
                 </View>
-                {techniques.map((item: string, idx: number) => {
-                  if (!item?.trim()) return null;
-                  if (isSectionHeader(item)) {
-                    return <Text key={idx} style={styles.sectionHeader}>{item.replace(/\s*:\s*$/, '')}</Text>;
-                  }
-
-                  if (isScenarioTitle(item)) {
-                    return <Text key={idx} style={styles.scenarioTitle}>{item}</Text>;
-                  }
+                {evaluationSections.map((section, idx) => {
+                  const expanded = expandedSections[section.id] ?? idx === 0;
 
                   return (
-                    <View key={idx} style={styles.techRow}>
-                      <Text style={styles.bulletDot}>•</Text>
-                      <Text style={styles.bulletItem}>{item}</Text>
+                    <View key={section.id} style={styles.sectionCard}>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        style={styles.sectionHeaderRow}
+                        onPress={() => setExpandedSections((prev) => ({ ...prev, [section.id]: !expanded }))}
+                      >
+                        <Text style={styles.sectionHeader}>{section.title}</Text>
+                        <Ionicons name={expanded ? 'chevron-down' : 'chevron-forward'} size={18} color="#fde68a" />
+                      </TouchableOpacity>
+
+                      {expanded && section.contents.map((content, contentIdx) => {
+                        if (content.kind === 'scenario') {
+                          return (
+                            <View key={`${section.id}-scenario-${contentIdx}`} style={styles.scenarioCard}>
+                              <Text style={styles.scenarioTitle}>{content.title}</Text>
+                              {content.items.map((line, lineIdx) => (
+                                <View key={`${section.id}-scenario-${contentIdx}-item-${lineIdx}`} style={styles.techRow}>
+                                  <Text style={styles.bulletDot}>•</Text>
+                                  <Text style={styles.bulletItem}>{line}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          );
+                        }
+
+                        return (
+                          <View key={`${section.id}-item-${contentIdx}`} style={styles.techRow}>
+                            <Text style={styles.bulletDot}>•</Text>
+                            <Text style={styles.bulletItem}>{content.text}</Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   );
                 })}
@@ -332,24 +436,40 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     letterSpacing: 0.4,
   },
+  sectionCard: {
+    marginTop: 8,
+    backgroundColor: '#0b1220',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    padding: 10,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   scenarioTitle: {
     color: '#93c5fd',
     fontSize: 14,
     fontWeight: '700',
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  scenarioCard: {
     marginTop: 8,
-    marginBottom: 2,
+    backgroundColor: '#0b1220',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    padding: 10,
   },
   techRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: '#111827',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#1f2937',
+    paddingVertical: 4,
+    marginTop: 4,
   },
   bulletDot: {
     color: '#60a5fa',
