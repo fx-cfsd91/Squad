@@ -23,6 +23,13 @@ const getBeltLabel = (belt: string): string => {
   return emoji + '  ' + belt;
 };
 
+const isSectionHeader = (line: string): boolean => {
+  const text = line.trim();
+  if (!text) return false;
+  if (text.endsWith(':')) return true;
+  return text.length <= 24 && /^[A-ZÀ-ÖØ-Ý0-9\s'’\-/]+$/.test(text);
+};
+
 export default function Evaluations() {
   const router = useRouter();
   const [discipline, setDiscipline] = useState<string>('MMA');
@@ -171,9 +178,23 @@ export default function Evaluations() {
           <>
             {techniques.length > 0 && (
               <View style={styles.evalBlockImproved}>
-                {techniques.map((item: string, idx: number) => (
-                  <Text key={idx} style={styles.bulletItem}>{'• '}{item}</Text>
-                ))}
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaChip}>{discipline}</Text>
+                  <Text style={styles.metaChip}>{selectedBelt}</Text>
+                </View>
+                {techniques.map((item: string, idx: number) => {
+                  if (!item?.trim()) return null;
+                  if (isSectionHeader(item)) {
+                    return <Text key={idx} style={styles.sectionHeader}>{item.replace(/\s*:\s*$/, '')}</Text>;
+                  }
+
+                  return (
+                    <View key={idx} style={styles.techRow}>
+                      <Text style={styles.bulletDot}>•</Text>
+                      <Text style={styles.bulletItem}>{item}</Text>
+                    </View>
+                  );
+                })}
               </View>
             )}
             {techniques.length === 0 && !loading && (
@@ -226,12 +247,57 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  metaChip: {
+    color: '#cbd5e1',
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionHeader: {
+    color: '#ffe066',
+    fontSize: 15,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 12,
+    marginBottom: 4,
+    letterSpacing: 0.4,
+  },
+  techRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#0b1220',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  bulletDot: {
+    color: '#38bdf8',
+    fontSize: 18,
+    lineHeight: 20,
+    fontWeight: '900',
   },
   bulletItem: {
     color: '#fff',
-    fontSize: 16,
-    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 21,
     fontWeight: '400',
     textAlign: 'left',
+    flex: 1,
   },
 });
