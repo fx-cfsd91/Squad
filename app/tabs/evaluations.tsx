@@ -12,6 +12,8 @@ const BELTS_BY_DISCIPLINE: { [key: string]: string[] } = {
   Warriors: ['Jaune I', 'Jaune II', 'Jaune III', 'Orange I', 'Orange II', 'Orange III', 'Verte'],
 };
 
+const DISCIPLINES = ['MMA', 'Krav-Maga', 'Kids', 'Warriors'] as const;
+
 const getBeltLabel = (belt: string): string => {
   const emoji = belt.includes('Jaune') ? '🟨' : 
                 belt.includes('Orange') ? '🟧' : 
@@ -29,6 +31,8 @@ const isSectionHeader = (line: string): boolean => {
   if (text.endsWith(':')) return true;
   return text.length <= 24 && /^[A-ZÀ-ÖØ-Ý0-9\s'’\-/]+$/.test(text);
 };
+
+const isScenarioTitle = (line: string): boolean => /^\d+\s*:/.test(line.trim());
 
 export default function Evaluations() {
   const router = useRouter();
@@ -102,7 +106,7 @@ export default function Evaluations() {
   }, [discipline, selectedBelt]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
+    <View style={styles.screen}>
       <HeaderBar
         title="Évaluations"
         backgroundColor="#fff"
@@ -122,22 +126,22 @@ export default function Evaluations() {
           </View>
         )}
       />
-      <View style={{ backgroundColor: '#fff', width: '100%', height: 24 }} />
+      <View style={styles.headerSpacer} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container}>
         {/* Discipline buttons */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 12, width: '100%', marginBottom: 16 }}>
-          <TouchableOpacity onPress={() => setDiscipline('MMA')} style={{ backgroundColor: discipline === 'MMA' ? '#ef4444' : '#222', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>MMA</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setDiscipline('Krav-Maga')} style={{ backgroundColor: discipline === 'Krav-Maga' ? '#ef4444' : '#222', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Krav-Maga</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setDiscipline('Kids')} style={{ backgroundColor: discipline === 'Kids' ? '#ef4444' : '#222', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Kids</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setDiscipline('Warriors')} style={{ backgroundColor: discipline === 'Warriors' ? '#ef4444' : '#222', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Warriors</Text>
-          </TouchableOpacity>
+        <View style={styles.disciplineRow}>
+          {DISCIPLINES.map((item) => {
+            const active = discipline === item;
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setDiscipline(item)}
+                style={[styles.disciplineBtn, active ? styles.disciplineBtnActive : null]}
+              >
+                <Text style={[styles.disciplineText, active ? styles.disciplineTextActive : null]}>{item}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Belt Picker */}
@@ -178,6 +182,7 @@ export default function Evaluations() {
           <>
             {techniques.length > 0 && (
               <View style={styles.evalBlockImproved}>
+                <Text style={styles.mainTitle}>Programme d'évaluation</Text>
                 <View style={styles.metaRow}>
                   <Text style={styles.metaChip}>{discipline}</Text>
                   <Text style={styles.metaChip}>{selectedBelt}</Text>
@@ -186,6 +191,10 @@ export default function Evaluations() {
                   if (!item?.trim()) return null;
                   if (isSectionHeader(item)) {
                     return <Text key={idx} style={styles.sectionHeader}>{item.replace(/\s*:\s*$/, '')}</Text>;
+                  }
+
+                  if (isScenarioTitle(item)) {
+                    return <Text key={idx} style={styles.scenarioTitle}>{item}</Text>;
                   }
 
                   return (
@@ -198,7 +207,9 @@ export default function Evaluations() {
               </View>
             )}
             {techniques.length === 0 && !loading && (
-              <Text style={{ color: '#888', fontSize: 15, marginTop: 8 }}>Aucune technique pour cette ceinture.</Text>
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>Aucune technique pour cette ceinture.</Text>
+              </View>
             )}
           </>
         )}
@@ -211,44 +222,89 @@ export default function Evaluations() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  headerSpacer: {
+    backgroundColor: '#fff',
+    width: '100%',
+    height: 16,
+  },
   container: {
     flexGrow: 1,
     backgroundColor: '#000',
-    padding: 20,
+    paddingHorizontal: 14,
+    paddingTop: 18,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
+  disciplineRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    width: '100%',
+    marginBottom: 14,
+  },
+  disciplineBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  disciplineBtnActive: {
+    backgroundColor: '#ef4444',
+    borderColor: '#fecaca',
+  },
+  disciplineText: {
+    color: '#d1d5db',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  disciplineTextActive: {
+    color: '#fff',
+  },
   pickerWrap: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 14,
     backgroundColor: '#18181b',
-    padding: 16,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#64748b',
+    borderColor: '#334155',
   },
   pickerLabel: {
-    color: '#fff',
-    fontSize: 18,
-    marginBottom: 10,
+    color: '#e2e8f0',
+    fontSize: 14,
+    marginBottom: 8,
     fontWeight: '700',
+    letterSpacing: 0.3,
   },
   pickerBox: {
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    backgroundColor: '#1e293b',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#7f1d1d',
+    backgroundColor: '#0b1220',
     overflow: 'hidden',
   },
   evalBlockImproved: {
-    marginTop: 18,
+    marginTop: 8,
     alignSelf: 'stretch',
-    backgroundColor: '#18181b',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#090f1a',
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#1e293b',
+  },
+  mainTitle: {
+    color: '#f8fafc',
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 10,
   },
   metaRow: {
     flexDirection: 'row',
@@ -257,8 +313,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   metaChip: {
-    color: '#cbd5e1',
-    backgroundColor: '#0f172a',
+    color: '#e2e8f0',
+    backgroundColor: '#111827',
     borderWidth: 1,
     borderColor: '#334155',
     paddingHorizontal: 10,
@@ -268,26 +324,35 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   sectionHeader: {
-    color: '#ffe066',
+    color: '#fde68a',
     fontSize: 15,
     fontWeight: '800',
     textTransform: 'uppercase',
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 14,
+    marginBottom: 6,
     letterSpacing: 0.4,
+  },
+  scenarioTitle: {
+    color: '#93c5fd',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 8,
+    marginBottom: 2,
   },
   techRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#111827',
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#1f2937',
   },
   bulletDot: {
-    color: '#38bdf8',
+    color: '#60a5fa',
     fontSize: 18,
     lineHeight: 20,
     fontWeight: '900',
@@ -299,5 +364,19 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     textAlign: 'left',
     flex: 1,
+  },
+  emptyCard: {
+    marginTop: 8,
+    alignSelf: 'stretch',
+    backgroundColor: '#111827',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+  },
+  emptyText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
