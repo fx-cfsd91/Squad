@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HeaderBar from '../../components/header-bar';
 import { API_CONFIG } from '../../constants/config';
@@ -32,7 +32,7 @@ const isSectionHeader = (line: string): boolean => {
   return text.length <= 24 && /^[A-ZÀ-ÖØ-Ý0-9\s'’\-/]+$/.test(text);
 };
 
-const isScenarioTitle = (line: string): boolean => /^\d+\s*:/.test(line.trim());
+const isScenarioTitle = (line: string): boolean => /^\d+\s*[:.]/.test(line.trim());
 
 type SectionContent =
   | { kind: 'scenario'; title: string; items: string[] }
@@ -107,6 +107,22 @@ const buildEvaluationSections = (techniques: string[]): EvaluationSection[] => {
 
   flushScenario();
   flushSection();
+
+  if (sections.length === 0) {
+    const fallbackItems = techniques
+      .map((t) => t?.trim())
+      .filter(Boolean)
+      .map((text) => ({ kind: 'item' as const, text: text! }));
+
+    if (fallbackItems.length > 0) {
+      sections.push({
+        id: 'general-0',
+        title: 'Général',
+        contents: fallbackItems,
+      });
+    }
+  }
+
   return sections;
 };
 
@@ -118,6 +134,7 @@ export default function Evaluations() {
   const [loading, setLoading] = useState(false);
   const [techniques, setTechniques] = useState<string[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const activeRequestIdRef = useRef(0);
 
   const beltsToShow = BELTS_BY_DISCIPLINE[discipline] || BELTS_BY_DISCIPLINE['MMA'];
   const evaluationSections = useMemo(() => buildEvaluationSections(techniques), [techniques]);
@@ -133,6 +150,7 @@ export default function Evaluations() {
 
   useEffect(() => {
     const fetchTechniques = async () => {
+      const requestId = ++activeRequestIdRef.current;
       setLoading(true);
       let filePrefix = '';
       let fileBelt = '';
@@ -168,10 +186,14 @@ export default function Evaluations() {
 
       try {
         const response = await fetch(url, { cache: 'no-store' });
+        if (requestId !== activeRequestIdRef.current) return;
+
         if (!response.ok) {
           setTechniques([]);
         } else {
           const data = await response.json();
+          if (requestId !== activeRequestIdRef.current) return;
+
           let list: string[] = [];
           if (Array.isArray(data.techniques)) list = data.techniques;
           else if (Array.isArray(data.evaluations)) list = data.evaluations;
@@ -179,9 +201,13 @@ export default function Evaluations() {
           setTechniques(list);
         }
       } catch (e) {
+        if (requestId !== activeRequestIdRef.current) return;
         setTechniques([]);
       }
-      setLoading(false);
+
+      if (requestId === activeRequestIdRef.current) {
+        setLoading(false);
+      }
     };
 
     fetchTechniques();
