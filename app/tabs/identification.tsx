@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-import { STORAGE_KEYS, API_CONFIG, API_HEADERS } from '../../constants/config';
+import { STORAGE_KEYS, API_CONFIG, API_HEADERS, PASSWORD_RULES } from '../../constants/config';
 import { Eleve } from '../../constants/types';
 import { normalizeString } from '../../lib/utils';
 
@@ -15,6 +15,117 @@ export default function Identification() {
   const [eleves, setEleves] = useState<Eleve[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Reset password modal
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetNom, setResetNom] = useState('');
+  const [resetPrenom, setResetPrenom] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
+  // Delete account modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteNom, setDeleteNom] = useState('');
+  const [deletePrenom, setDeletePrenom] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteNom(''); setDeletePrenom(''); setDeletePassword(''); setDeleteConfirmed(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deleteNom.trim() || !deletePrenom.trim()) {
+      Alert.alert('Erreur', 'Veuillez entrer votre nom et prénom.');
+      return;
+    }
+    if (!deletePassword) {
+      Alert.alert('Erreur', 'Veuillez entrer votre mot de passe.');
+      return;
+    }
+    if (!deleteConfirmed) {
+      Alert.alert('Erreur', 'Vous devez cocher la case de confirmation.');
+      return;
+    }
+    const match = eleves.find(
+      e => normalizeString(e.nom).toLowerCase() === normalizeString(deleteNom).trim().toLowerCase() &&
+           normalizeString(e.prenom).toLowerCase() === normalizeString(deletePrenom).trim().toLowerCase()
+    );
+    if (!match) {
+      Alert.alert('Introuvable', 'Aucun élève ne correspond à ce nom et prénom.');
+      return;
+    }
+    try {
+      setDeleteLoading(true);
+      const response = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
+        method: 'DELETE',
+        headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: match.id, password: deletePassword }),
+      });
+      const data = await response.json();
+      if (response.ok && (data.success || data.ok)) {
+        await AsyncStorage.multiRemove([STORAGE_KEYS.USER, 'cfsd91_identifie', 'cfsd91_eleve_data']);
+        closeDeleteModal();
+        Alert.alert('✅ Données supprimées', 'Vos données ont été effacées définitivement.');
+      } else {
+        Alert.alert('Erreur', data.error || data.message || 'Impossible de supprimer les données. Vérifiez votre mot de passe.');
+      }
+    } catch (e: any) {
+      Alert.alert('Erreur', e?.message || 'Erreur réseau.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const isStrongPassword = (pwd: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
+
+  const handleResetPassword = async () => {
+    if (!resetNom.trim() || !resetPrenom.trim()) {
+      Alert.alert('Erreur', 'Veuillez entrer votre nom et prénom.');
+      return;
+    }
+    if (!isStrongPassword(resetNewPassword)) {
+      Alert.alert('Mot de passe invalide', 'Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
+      return;
+    }
+    const match = eleves.find(
+      e => normalizeString(e.nom).toLowerCase() === normalizeString(resetNom).trim().toLowerCase() &&
+           normalizeString(e.prenom).toLowerCase() === normalizeString(resetPrenom).trim().toLowerCase()
+    );
+    if (!match) {
+      Alert.alert('Introuvable', 'Aucun élève ne correspond à ce nom et prénom.');
+      return;
+    }
+    try {
+      setResetLoading(true);
+      const response = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
+        method: 'PUT',
+        headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: match.id, password: resetNewPassword }),
+      });
+      const data = await response.json();
+      if (response.ok && (data.success || data.ok)) {
+        Alert.alert('✅ Succès', 'Votre mot de passe a été modifié.');
+        setShowResetModal(false);
+        setResetNom(''); setResetPrenom('');
+        setResetNewPassword(''); setResetConfirmPassword('');
+      } else {
+        Alert.alert('Erreur', data.error || data.message || 'Impossible de modifier le mot de passe.');
+      }
+    } catch (e: any) {
+      Alert.alert('Erreur', e?.message || 'Erreur réseau.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -165,6 +276,141 @@ export default function Identification() {
               <Text style={styles.buttonText}>Retour</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity style={styles.resetLink} onPress={() => setShowResetModal(true)} disabled={loading}>
+            <Text style={styles.resetLinkText}>Réinitialiser le mot de passe</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.resetLink} onPress={() => setShowDeleteModal(true)} disabled={loading}>
+            <Text style={[styles.resetLinkText, { color: '#ef4444' }]}>Supprimer mes données</Text>
+          </TouchableOpacity>
+
+          {/* Modal suppression compte */}
+          <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={closeDeleteModal}>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalBox, { borderColor: '#ef4444' }]}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <Text style={[styles.modalTitle, { color: '#ef4444' }]}>⚠️ Supprimer mes données</Text>
+                  <Text style={styles.modalSubtitle}>Cette action est <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>irréversible</Text>. Toutes vos données seront définitivement supprimées du serveur.</Text>
+
+                  <Text style={styles.modalLabel}>Nom</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Nom"
+                    placeholderTextColor="#888"
+                    value={deleteNom}
+                    onChangeText={setDeleteNom}
+                    autoCapitalize="words"
+                  />
+                  <Text style={styles.modalLabel}>Prénom</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Prénom"
+                    placeholderTextColor="#888"
+                    value={deletePrenom}
+                    onChangeText={setDeletePrenom}
+                    autoCapitalize="words"
+                  />
+                  <Text style={styles.modalLabel}>Mot de passe</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Mot de passe"
+                    placeholderTextColor="#888"
+                    value={deletePassword}
+                    onChangeText={setDeletePassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoComplete="current-password"
+                  />
+
+                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 18, marginBottom: 4 }} onPress={() => setDeleteConfirmed(v => !v)}>
+                    <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#ef4444', backgroundColor: deleteConfirmed ? '#ef4444' : '#09090b', marginTop: 1, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                      {deleteConfirmed && <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>✓</Text>}
+                    </View>
+                    <Text style={{ color: '#e5e7eb', fontSize: 13, flexShrink: 1 }}>Je comprends que cette suppression est définitive et irréversible.</Text>
+                  </TouchableOpacity>
+
+                  {deleteLoading ? (
+                    <ActivityIndicator color="#ef4444" style={{ marginTop: 16 }} />
+                  ) : (
+                    <View style={styles.modalBtns}>
+                      <TouchableOpacity style={[styles.button, { backgroundColor: '#ef4444' }]} onPress={handleDeleteAccount}>
+                        <Text style={styles.buttonText}>Supprimer</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={closeDeleteModal}>
+                        <Text style={styles.buttonText}>Annuler</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+
+          {/* Modal réinitialisation mot de passe */}
+          <Modal visible={showResetModal} transparent animationType="fade" onRequestClose={() => setShowResetModal(false)}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalBox}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <Text style={styles.modalTitle}>Réinitialiser le mot de passe</Text>
+                  <Text style={styles.modalSubtitle}>Entrez votre nom et prénom pour vous identifier, puis choisissez un nouveau mot de passe.</Text>
+
+                  <Text style={styles.modalLabel}>Nom</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Nom"
+                    placeholderTextColor="#888"
+                    value={resetNom}
+                    onChangeText={setResetNom}
+                    autoCapitalize="words"
+                  />
+                  <Text style={styles.modalLabel}>Prénom</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Prénom"
+                    placeholderTextColor="#888"
+                    value={resetPrenom}
+                    onChangeText={setResetPrenom}
+                    autoCapitalize="words"
+                  />
+                  <Text style={styles.modalLabel}>Nouveau mot de passe</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Nouveau mot de passe"
+                    placeholderTextColor="#888"
+                    value={resetNewPassword}
+                    onChangeText={setResetNewPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoComplete="new-password"
+                  />
+                  <Text style={styles.modalLabel}>Confirmer le mot de passe</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="Confirmer le mot de passe"
+                    placeholderTextColor="#888"
+                    value={resetConfirmPassword}
+                    onChangeText={setResetConfirmPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoComplete="new-password"
+                  />
+                  <Text style={styles.modalHint}>8 caractères min., une majuscule, une minuscule, un chiffre, un caractère spécial.</Text>
+
+                  {resetLoading ? (
+                    <ActivityIndicator color="#b40a0a" style={{ marginTop: 16 }} />
+                  ) : (
+                    <View style={styles.modalBtns}>
+                      <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+                        <Text style={styles.buttonText}>Confirmer</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => { setShowResetModal(false); setResetNom(''); setResetPrenom(''); setResetNewPassword(''); setResetConfirmPassword(''); }}>
+                        <Text style={styles.buttonText}>Annuler</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
     </View>
@@ -255,5 +501,72 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 15,
     alignSelf: 'center',
+  },
+  resetLink: {
+    marginTop: 16,
+    alignSelf: 'center',
+  },
+  resetLinkText: {
+    color: '#3b82f6',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    backgroundColor: '#18181b',
+    borderRadius: 14,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#b40a0a',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    color: '#9ca3af',
+    fontSize: 13,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalLabel: {
+    color: '#e5e7eb',
+    fontSize: 12,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  modalInput: {
+    width: '100%',
+    backgroundColor: '#09090b',
+    color: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#64748b',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  modalHint: {
+    color: '#6b7280',
+    fontSize: 11,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  modalBtns: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    justifyContent: 'center',
   },
 });

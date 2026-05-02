@@ -419,6 +419,7 @@ export default function Adhesion() {
               placeholderTextColor="#777"
               secureTextEntry
               autoCapitalize="none"
+              autoComplete="new-password"
             />
             {/* ...existing code... */}
             {/* Cases à cocher supprimées */}
