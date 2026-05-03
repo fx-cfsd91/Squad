@@ -20,8 +20,6 @@ export default function Identification() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetNom, setResetNom] = useState('');
   const [resetPrenom, setResetPrenom] = useState('');
-  const [resetNewPassword, setResetNewPassword] = useState('');
-  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
 
   // Delete account modal
@@ -80,45 +78,28 @@ export default function Identification() {
     }
   };
 
-  const isStrongPassword = (pwd: string) =>
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
-
   const handleResetPassword = async () => {
     if (!resetNom.trim() || !resetPrenom.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre nom et prénom.');
       return;
     }
-    if (!isStrongPassword(resetNewPassword)) {
-      Alert.alert('Mot de passe invalide', 'Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
-      return;
-    }
-    if (resetNewPassword !== resetConfirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
-      return;
-    }
-    const match = eleves.find(
-      e => normalizeString(e.nom).toLowerCase() === normalizeString(resetNom).trim().toLowerCase() &&
-           normalizeString(e.prenom).toLowerCase() === normalizeString(resetPrenom).trim().toLowerCase()
-    );
-    if (!match) {
-      Alert.alert('Introuvable', 'Aucun élève ne correspond à ce nom et prénom.');
-      return;
-    }
     try {
       setResetLoading(true);
-      const response = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
-        method: 'PUT',
+      const response = await fetch(API_CONFIG.RESET_PASSWORD_URL, {
+        method: 'POST',
         headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: match.id, password: resetNewPassword }),
+        body: JSON.stringify({ nom: resetNom.trim(), prenom: resetPrenom.trim() }),
       });
       const data = await response.json();
-      if (response.ok && (data.success || data.ok)) {
-        Alert.alert('✅ Succès', 'Votre mot de passe a été modifié.');
+      if (response.ok && data.success) {
         setShowResetModal(false);
         setResetNom(''); setResetPrenom('');
-        setResetNewPassword(''); setResetConfirmPassword('');
+        Alert.alert(
+          '📧 Email envoyé',
+          'Si un compte correspond à ces informations, vous allez recevoir un email avec un lien de réinitialisation (valable 1 heure).'
+        );
       } else {
-        Alert.alert('Erreur', data.error || data.message || 'Impossible de modifier le mot de passe.');
+        Alert.alert('Erreur', data.error || 'Impossible d\'envoyer l\'email. Réessayez.');
       }
     } catch (e: any) {
       Alert.alert('Erreur', e?.message || 'Erreur réseau.');
@@ -351,7 +332,7 @@ export default function Identification() {
               <View style={styles.modalBox}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <Text style={styles.modalTitle}>Réinitialiser le mot de passe</Text>
-                  <Text style={styles.modalSubtitle}>Entrez votre nom et prénom pour vous identifier, puis choisissez un nouveau mot de passe.</Text>
+                  <Text style={styles.modalSubtitle}>Entrez votre nom et prénom. Si un compte correspond, vous recevrez un email avec un lien de réinitialisation valable 1 heure.</Text>
 
                   <Text style={styles.modalLabel}>Nom</Text>
                   <TextInput
@@ -371,38 +352,15 @@ export default function Identification() {
                     onChangeText={setResetPrenom}
                     autoCapitalize="words"
                   />
-                  <Text style={styles.modalLabel}>Nouveau mot de passe</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    placeholder="Nouveau mot de passe"
-                    placeholderTextColor="#888"
-                    value={resetNewPassword}
-                    onChangeText={setResetNewPassword}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoComplete="new-password"
-                  />
-                  <Text style={styles.modalLabel}>Confirmer le mot de passe</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    placeholder="Confirmer le mot de passe"
-                    placeholderTextColor="#888"
-                    value={resetConfirmPassword}
-                    onChangeText={setResetConfirmPassword}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoComplete="new-password"
-                  />
-                  <Text style={styles.modalHint}>8 caractères min., une majuscule, une minuscule, un chiffre, un caractère spécial.</Text>
 
                   {resetLoading ? (
                     <ActivityIndicator color="#b40a0a" style={{ marginTop: 16 }} />
                   ) : (
                     <View style={styles.modalBtns}>
                       <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-                        <Text style={styles.buttonText}>Confirmer</Text>
+                        <Text style={styles.buttonText}>Envoyer le lien</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => { setShowResetModal(false); setResetNom(''); setResetPrenom(''); setResetNewPassword(''); setResetConfirmPassword(''); }}>
+                      <TouchableOpacity style={[styles.button, styles.backBtnInline]} onPress={() => { setShowResetModal(false); setResetNom(''); setResetPrenom(''); }}>
                         <Text style={styles.buttonText}>Annuler</Text>
                       </TouchableOpacity>
                     </View>

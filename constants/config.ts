@@ -12,6 +12,7 @@ export const API_CONFIG = {
   
   // Authentication
   LOGIN_URL: 'https://cfsd91.com/appli/php/identification.php',
+  RESET_PASSWORD_URL: 'https://cfsd91.com/reset-password-request.php',
   
   // Presence
   PRESENCE_SAVE_URL: 'https://cfsd91.com/presences_save.php',
