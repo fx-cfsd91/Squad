@@ -140,45 +140,55 @@ export default function Identification() {
   );
 
   const handleIdentify = async () => {
+    setError('');
     try {
       console.log('🔑 Tentative d\'authentification...');
-      console.log('Nom:', nom, 'Prénom:', prenom);
-      
-      setLoading(true);
       
       if (!nom || !prenom) {
-        Alert.alert('Erreur', 'Veuillez entrer votre nom et prénom');
-        setLoading(false);
+        setError('Veuillez entrer votre nom et prénom');
         return;
       }
 
       if (!password) {
-        Alert.alert('Erreur', 'Veuillez entrer votre mot de passe');
+        setError('Veuillez entrer votre mot de passe');
+        return;
+      }
+
+      setLoading(true);
+
+      // Appeler l'endpoint de login
+      console.log('📡 Envoi vers identification.php...');
+      let response: Response;
+      try {
+        response = await fetch(API_CONFIG.LOGIN_URL, {
+          method: 'POST',
+          headers: {
+            ...API_HEADERS,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nom, prenom, password })
+        });
+      } catch (networkErr) {
+        setError('Erreur réseau : impossible de joindre le serveur. Vérifiez votre connexion.');
         setLoading(false);
         return;
       }
 
-      // Appeler l'endpoint de login
-      console.log('📡 Envoi vers identification.php...');
-      const response = await fetch(API_CONFIG.LOGIN_URL, {
-        method: 'POST',
-        headers: {
-          ...API_HEADERS,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nom,
-          prenom,
-          password
-        })
-      });
-
       console.log('📊 Response status:', response.status);
-      const data = await response.json();
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        setError(`Le serveur a retourné une réponse invalide (HTTP ${response.status})`);
+        setLoading(false);
+        return;
+      }
+
       console.log('📋 Response data:', data);
 
       if (!data.ok) {
-        Alert.alert('Erreur', data.error || 'Authentification échouée');
+        setError(data.error || 'Authentification échouée');
         setLoading(false);
         return;
       }
@@ -191,11 +201,10 @@ export default function Identification() {
       await AsyncStorage.setItem('cfsd91_identifie', '1');
       await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleve));
       
-      Alert.alert('Succès', `Bienvenue ${eleve.prenom}!`);
       router.replace('/tabs');
-    } catch (error) {
-      console.error('❌ Erreur authentification:', error);
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de l\'authentification');
+    } catch (err) {
+      console.error('❌ Erreur authentification:', err);
+      setError(err instanceof Error ? err.message : 'Erreur inattendue');
     } finally {
       setLoading(false);
     }
