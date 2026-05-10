@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { STORAGE_KEYS, API_CONFIG, API_HEADERS, PASSWORD_RULES } from '../../constants/config';
 import { Eleve } from '../../constants/types';
 import { normalizeString } from '../../lib/utils';
+
+// Sur web (Vercel), utiliser le proxy pour éviter les erreurs CORS
+const LOGIN_URL = Platform.OS === 'web' ? '/api/login' : API_CONFIG.LOGIN_URL;
 
 export default function Identification() {
   const router = useRouter();
@@ -160,7 +163,7 @@ export default function Identification() {
       console.log('📡 Envoi vers identification.php...');
       let response: Response;
       try {
-        response = await fetch(API_CONFIG.LOGIN_URL, {
+        response = await fetch(LOGIN_URL, {
           method: 'POST',
           headers: {
             ...API_HEADERS,
