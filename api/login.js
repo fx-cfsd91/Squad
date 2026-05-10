@@ -1,4 +1,29 @@
 // Vercel serverless proxy - contourne le CORS pour identification.php
+const UPSTREAM_URLS = [
+  'https://cfsd91.com/appli/php/identification.php',
+  'https://cfsd91.com/identification.php',
+];
+
+function normalizeBody(body) {
+  if (body == null) return {};
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return {};
+    }
+  }
+  if (typeof body === 'object') return body;
+  return {};
+}
+
+function shortSnippet(text) {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 180);
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,19 +37,50 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  try {
-    const response = await fetch('https://cfsd91.com/appli/php/identification.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e'
-      },
-      body: JSON.stringify(req.body)
-    });
+  const payload = normalizeBody(req.body);
+  let lastFailure = null;
 
-    const data = await response.json();
-    return res.status(response.status).json(data);
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: 'Erreur proxy: ' + error.message });
+  for (const url of UPSTREAM_URLS) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const raw = await response.text();
+      let parsed = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
+
+      if (parsed) {
+        return res.status(response.status).json(parsed);
+      }
+
+      lastFailure = {
+        url,
+        status: response.status,
+        snippet: shortSnippet(raw),
+      };
+    } catch (error) {
+      lastFailure = {
+        url,
+        status: 0,
+        snippet: String(error && error.message ? error.message : error),
+      };
+    }
   }
+
+  return res.status(502).json({
+    ok: false,
+    error: 'Le serveur d\'authentification a retourne une reponse invalide.',
+    details: lastFailure,
+  });
 };
