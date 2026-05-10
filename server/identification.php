@@ -24,10 +24,14 @@ if (!is_array($in) || !isset($in['nom'], $in['prenom'], $in['password'])) {
     exit;
 }
 
-$path = dirname(__DIR__, 2) . '/priv/eleves.json';
+$path = dirname($_SERVER['DOCUMENT_ROOT']) . '/priv/eleves.json';
+// Fallback si DOCUMENT_ROOT non disponible
+if (!is_file($path)) {
+    $path = dirname(__DIR__, 4) . '/priv/eleves.json';
+}
 if (!is_file($path)) {
     http_response_code(404);
-    echo json_encode(['ok'=>false,'error'=>'Fichier élèves absent']);
+    echo json_encode(['ok'=>false,'error'=>'Fichier élèves absent','debug_path'=>$path,'document_root'=>$_SERVER['DOCUMENT_ROOT'],'dir'=>__DIR__]);
     exit;
 }
 $data = @file_get_contents($path);
