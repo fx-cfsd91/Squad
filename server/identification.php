@@ -24,14 +24,12 @@ if (!is_array($in) || !isset($in['nom'], $in['prenom'], $in['password'])) {
     exit;
 }
 
-$path = dirname($_SERVER['DOCUMENT_ROOT']) . '/priv/eleves.json';
-// Fallback si DOCUMENT_ROOT non disponible
-if (!is_file($path)) {
-    $path = dirname(__DIR__, 4) . '/priv/eleves.json';
-}
+// identification.php est dans /appli/php/ donc 2 niveaux plus profond que la racine
+// eleves.php à la racine utilise dirname(__DIR__, 2) → ici il faut dirname(__DIR__, 4)
+$path = dirname(__DIR__, 4) . '/priv/eleves.json';
 if (!is_file($path)) {
     http_response_code(404);
-    echo json_encode(['ok'=>false,'error'=>'Fichier élèves absent','debug_path'=>$path,'document_root'=>$_SERVER['DOCUMENT_ROOT'],'dir'=>__DIR__]);
+    echo json_encode(['ok'=>false,'error'=>'Fichier élèves absent','debug_path'=>$path]);
     exit;
 }
 $data = @file_get_contents($path);
