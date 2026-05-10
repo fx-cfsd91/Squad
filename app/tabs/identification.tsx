@@ -191,7 +191,17 @@ export default function Identification() {
       console.log('📋 Response data:', data);
 
       if (!data.ok) {
-        setError(data.error || 'Authentification échouée');
+        let errorMessage = data.error || 'Authentification échouée';
+        if (data.details) {
+          const detailUrl = data.details.url ? `URL: ${data.details.url}` : '';
+          const detailStatus = typeof data.details.status === 'number' ? `HTTP: ${data.details.status}` : '';
+          const detailSnippet = data.details.snippet ? `Réponse: ${data.details.snippet}` : '';
+          const detailParts = [detailUrl, detailStatus, detailSnippet].filter(Boolean);
+          if (detailParts.length > 0) {
+            errorMessage = `${errorMessage}\n${detailParts.join(' | ')}`;
+          }
+        }
+        setError(errorMessage);
         setLoading(false);
         return;
       }
