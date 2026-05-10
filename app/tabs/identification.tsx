@@ -159,8 +159,8 @@ export default function Identification() {
       }
 
       // Appeler l'endpoint de login
-      console.log('📡 Envoi vers /login.php...');
-      const response = await fetch('https://cfsd91.com/login.php', {
+      console.log('📡 Envoi vers identification.php...');
+      const response = await fetch(API_CONFIG.LOGIN_URL, {
         method: 'POST',
         headers: {
           ...API_HEADERS,
@@ -177,8 +177,8 @@ export default function Identification() {
       const data = await response.json();
       console.log('📋 Response data:', data);
 
-      if (!data.success) {
-        Alert.alert('Erreur', data.message || 'Authentification échouée');
+      if (!data.ok) {
+        Alert.alert('Erreur', data.error || 'Authentification échouée');
         setLoading(false);
         return;
       }
