@@ -9,6 +9,7 @@ import { normalizeString } from '../../lib/utils';
 
 // Sur web (Vercel), utiliser le proxy pour éviter les erreurs CORS
 const LOGIN_URL = Platform.OS === 'web' ? '/api/login' : API_CONFIG.LOGIN_URL;
+const DELETE_ACCOUNT_URL = Platform.OS === 'web' ? '/api/delete-account' : API_CONFIG.ELEVES_FETCH_URL;
 
 export default function Identification() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function Identification() {
     }
     try {
       setDeleteLoading(true);
-      const response = await fetch(API_CONFIG.ELEVES_FETCH_URL, {
+      const response = await fetch(DELETE_ACCOUNT_URL, {
         method: 'DELETE',
         headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: match.id, password: deletePassword }),

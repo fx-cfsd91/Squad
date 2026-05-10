@@ -219,14 +219,34 @@ switch ($method) {
         // Supprimer un élève
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input || !isset($input['id'])) {
+        if (!$input || !isset($input['id']) || !isset($input['password'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID']);
+            echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID or password']);
             exit;
         }
         
         $eleves = readEleves($elevesFile);
         $initialCount = count($eleves);
+
+        $target = null;
+        foreach ($eleves as $eleve) {
+            if (($eleve['id'] ?? null) === $input['id']) {
+                $target = $eleve;
+                break;
+            }
+        }
+
+        if (!$target) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found']);
+            exit;
+        }
+
+        if (!isset($target['password']) || (string)$target['password'] !== (string)$input['password']) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized', 'message' => 'Mot de passe incorrect']);
+            exit;
+        }
         
         $eleves = array_values(array_filter($eleves, function($eleve) use ($input) {
             return $eleve['id'] !== $input['id'];
