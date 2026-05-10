@@ -140,7 +140,15 @@ export default function FicheEleve() {
 			if (currentEleveData) {
 				const current = JSON.parse(currentEleveData);
 				if (String(current.id) === String(eleve.id)) {
-					await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(updated));
+					const updatedLight = {
+						id: updated.id,
+						nom: updated.nom,
+						prenom: updated.prenom,
+						discipline: updated.discipline,
+						email: updated.email,
+						licence: updated.licence,
+					};
+					await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(updatedLight));
 				}
 			}
 

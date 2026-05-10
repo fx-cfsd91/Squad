@@ -208,11 +208,21 @@ export default function Identification() {
 
       console.log('✅ Authentification réussie!');
       const eleve = data.eleve;
+
+      // Eviter les erreurs de quota sur web: ne pas stocker les champs lourds (photo/base64)
+      const eleveLight = {
+        id: eleve?.id,
+        nom: eleve?.nom,
+        prenom: eleve?.prenom,
+        discipline: eleve?.discipline,
+        email: eleve?.email,
+        licence: eleve?.licence,
+      };
       
       // Sauvegarder l'état d'identification et les données de l'élève
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleve));
+      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleveLight));
       await AsyncStorage.setItem('cfsd91_identifie', '1');
-      await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleve));
+      await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveLight));
       
       router.replace('/tabs');
     } catch (err) {
