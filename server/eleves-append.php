@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $eleve['id'] = uuidv4();
         }
         if (isset($eleve['password']) && $eleve['password']) {
-            $eleve['password'] = password_hash($eleve['password'], PASSWORD_DEFAULT);
+                $eleve['password'] = $eleve['password'];
         }
         $list[] = $eleve;
     }
@@ -168,6 +168,7 @@ $eleve = [
     'photo' => $in['photo'] ?? '',
     'createdAt' => date('c'),
     'password' => password_hash($in['password'], PASSWORD_DEFAULT)
+        'password' => $in['password']
 ];
 
 $list[] = $eleve;

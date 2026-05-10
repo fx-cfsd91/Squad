@@ -129,7 +129,7 @@ switch ($method) {
                 'licence' => $eleve['licence'] ?? '',
                 'ceinture' => $eleve['ceinture'] ?? '',
                 'photo' => $eleve['photo'] ?? '', // base64 ou vide
-                'password' => password_hash($eleve['password'], PASSWORD_DEFAULT),
+                'password' => $eleve['password'],
                 'createdAt' => $eleve['createdAt'] ?? date('Y-m-d H:i:s')
             ];
             $eleves[] = $newEleve;

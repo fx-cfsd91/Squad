@@ -1,7 +1,7 @@
-// Vercel serverless proxy - contourne le CORS pour identification.php
+// Vercel serverless proxy - contourne le CORS pour login.php
 const UPSTREAM_URLS = [
-  'https://cfsd91.com/appli/php/identification.php',
-  'https://cfsd91.com/identification.php',
+  'https://cfsd91.com/login.php',
+  'https://cfsd91.com/appli/php/login.php',
 ];
 
 function normalizeBody(body) {
@@ -61,7 +61,17 @@ module.exports = async function handler(req, res) {
       }
 
       if (parsed) {
-        return res.status(response.status).json(parsed);
+        if (parsed.ok === true || parsed.success === true) {
+          return res.status(response.status).json({
+            ok: true,
+            eleve: parsed.eleve || null,
+          });
+        }
+
+        return res.status(response.status).json({
+          ok: false,
+          error: parsed.error || parsed.message || 'Authentification echouee',
+        });
       }
 
       lastFailure = {

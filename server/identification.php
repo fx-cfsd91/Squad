@@ -53,11 +53,7 @@ function normalize($str) {
 }
 
 function checkPassword($input, $stored) {
-    // Si le mot de passe stocké est un hash bcrypt
-    if (strlen($stored) >= 60 && strpos($stored, '$2') === 0) {
-        return password_verify($input, $stored);
-    }
-    // Sinon comparaison texte brut (ancien système)
+    // Comparaison en clair (mode mot de passe non haché)
     return $input === $stored;
 }
 
@@ -74,12 +70,6 @@ foreach ($list as $index => $eleve) {
         if (!checkPassword($in['password'], $eleve['password'])) {
             echo json_encode(['ok'=>false,'error'=>'Mot de passe incorrect.']);
             exit;
-        }
-
-        // Mot de passe correct - hasher s'il était en texte brut
-        if (strlen($eleve['password']) < 60 || strpos($eleve['password'], '$2') !== 0) {
-            $list[$index]['password'] = password_hash($in['password'], PASSWORD_DEFAULT);
-            file_put_contents($path, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         }
 
         $safe = $eleve;
