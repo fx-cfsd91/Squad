@@ -36,20 +36,38 @@ if (!is_array($list)) $list = [];
 
 function normalize($str) {
     $str = trim($str);
-    if (function_exists('normalizer_normalize')) {
-        $str = preg_replace('/[\x{0300}-\x{036f}]/u', '', normalizer_normalize($str, Normalizer::FORM_D));
-    } else {
-        // Fallback sans extension intl
-        $str = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str);
-    }
+    // Suppression manuelle des accents (sans extension intl)
+    $from = ['à','á','â','ã','ä','å','è','é','ê','ë','ì','í','î','ï','ò','ó','ô','õ','ö','ù','ú','û','ü','ý','ÿ','ñ','ç',
+             'À','Á','Â','Ã','Ä','Å','È','É','Ê','Ë','Ì','Í','Î','Ï','Ò','Ó','Ô','Õ','Ö','Ù','Ú','Û','Ü','Ý','Ñ','Ç'];
+    $to   = ['a','a','a','a','a','a','e','e','e','e','i','i','i','i','o','o','o','o','o','u','u','u','u','y','y','n','c',
+             'A','A','A','A','A','A','E','E','E','E','I','I','I','I','O','O','O','O','O','U','U','U','U','Y','N','C'];
+    $str = str_replace($from, $to, $str);
     return strtolower(str_replace(' ', '', $str));
 }
 
-foreach ($list as $eleve) {
+function checkPassword($input, $stored) {
+    // Si le mot de passe stocké est un hash bcrypt
+    if (strlen($stored) >= 60 && strpos($stored, '$2') === 0) {
+        return password_verify($input, $stored);
+    }
+    // Sinon comparaison texte brut (ancien système)
+    return $input === $stored;
+}
+
+foreach ($list as $index => $eleve) {
     if (normalize($eleve['nom'] ?? '') === normalize($in['nom']) &&
         normalize($eleve['prenom'] ?? '') === normalize($in['prenom']) &&
-        isset($eleve['password']) && password_verify($in['password'], $eleve['password'])) {
-        echo json_encode(['ok'=>true,'eleve'=>$eleve], JSON_UNESCAPED_UNICODE);
+        isset($eleve['password']) && checkPassword($in['password'], $eleve['password'])) {
+
+        // Si le mot de passe était en texte brut, le hasher maintenant
+        if (strlen($eleve['password']) < 60 || strpos($eleve['password'], '$2') !== 0) {
+            $list[$index]['password'] = password_hash($in['password'], PASSWORD_DEFAULT);
+            file_put_contents($path, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        }
+
+        $safe = $eleve;
+        unset($safe['password']);
+        echo json_encode(['ok'=>true,'eleve'=>$safe], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
