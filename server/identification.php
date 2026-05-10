@@ -58,10 +58,20 @@ function checkPassword($input, $stored) {
 
 foreach ($list as $index => $eleve) {
     if (normalize($eleve['nom'] ?? '') === normalize($in['nom']) &&
-        normalize($eleve['prenom'] ?? '') === normalize($in['prenom']) &&
-        isset($eleve['password']) && checkPassword($in['password'], $eleve['password'])) {
+        normalize($eleve['prenom'] ?? '') === normalize($in['prenom'])) {
 
-        // Si le mot de passe était en texte brut, le hasher maintenant
+        // Élève trouvé - vérifier le mot de passe
+        if (!isset($eleve['password']) || $eleve['password'] === '') {
+            echo json_encode(['ok'=>false,'error'=>'Aucun mot de passe défini pour ce compte. Utilisez "Réinitialiser le mot de passe".']);
+            exit;
+        }
+
+        if (!checkPassword($in['password'], $eleve['password'])) {
+            echo json_encode(['ok'=>false,'error'=>'Mot de passe incorrect.']);
+            exit;
+        }
+
+        // Mot de passe correct - hasher s'il était en texte brut
         if (strlen($eleve['password']) < 60 || strpos($eleve['password'], '$2') !== 0) {
             $list[$index]['password'] = password_hash($in['password'], PASSWORD_DEFAULT);
             file_put_contents($path, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
