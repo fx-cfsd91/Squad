@@ -35,7 +35,13 @@ $list = json_decode($data, true);
 if (!is_array($list)) $list = [];
 
 function normalize($str) {
-    $str = preg_replace('/[\x{0300}-\x{036f}]/u', '', normalizer_normalize($str, Normalizer::FORM_D));
+    $str = trim($str);
+    if (function_exists('normalizer_normalize')) {
+        $str = preg_replace('/[\x{0300}-\x{036f}]/u', '', normalizer_normalize($str, Normalizer::FORM_D));
+    } else {
+        // Fallback sans extension intl
+        $str = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str);
+    }
     return strtolower(str_replace(' ', '', $str));
 }
 
