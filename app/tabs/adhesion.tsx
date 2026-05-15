@@ -81,6 +81,7 @@ export default function Adhesion() {
   
   const [loading,setLoading]=useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
   const [showPasswordInfo, setShowPasswordInfo] = useState(false);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   
@@ -146,51 +147,30 @@ export default function Adhesion() {
   // Sélectionner une photo depuis la galerie
   // Fonction photo supprimée
   
-  // Charger les données depuis le serveur IONOS uniquement
-  React.useEffect(() => {
-    const loadFromServer = async () => {
-      try {
-        setLoading(true);
-
-        // Charger uniquement depuis le serveur IONOS avec clé API
-        const response = await fetch(REMOTE_JSON_URL, {
-          headers: { 'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e' }
-        });
-        if (!response.ok) {
-          throw new Error(`Erreur serveur: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const elevesData = Array.isArray(data) ? data : [];
-
-        setEleves(elevesData);
-      } catch (error: any) {
-        console.error('Erreur lors du chargement depuis le serveur:', error);
-        Alert.alert('Erreur de chargement', 'Impossible de récupérer les données du serveur. Vérifie ta connexion internet.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFromServer();
-  }, []);
+  // Pas besoin de charger les élèves existants pour une inscription
   
   const onSubmit = async()=>{
     if (submitting) return;
+    setFormError('');
     if (!isReglementLu) {
-      Alert.alert('Règlement requis', 'Vous devez accepter le règlement intérieur du CFSD91 avant d\'envoyer.');
+      setFormError('⚠️ Vous devez accepter le règlement intérieur du CFSD91 avant d\'envoyer.');
       return;
     }
     if(!nom.trim()||!prenom.trim()||!naissance||!jour||!discipline||!telUrgence.trim()){
-      Alert.alert('Champs obligatoires','Renseigne Nom, Prénom, Date, Jour, Discipline, Tél. d\'urgence.'); return;
+      setFormError('⚠️ Renseigne Nom, Prénom, Date de naissance, Jour, Discipline et Tél. d\'urgence.'); return;
     }
     if(!isStrongPassword(password)){
-      Alert.alert('Mot de passe','Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'); return;
+      setFormError('⚠️ Le mot de passe doit comporter au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'); return;
     }
-    if(!isValidFRPhone(telUrgence)) return Alert.alert('Erreur',"Téléphone d'urgence invalide (FR).");
-    if(telEleve && !isValidFRPhone(telEleve)) return Alert.alert('Erreur','Téléphone élève invalide (FR).');
-    if(telEleve && normPhone(telUrgence)===normPhone(telEleve))
-      return Alert.alert('Erreur',"Le téléphone élève doit être différent de l'urgence");
+    if(!isValidFRPhone(telUrgence)){
+      setFormError("⚠️ Téléphone d'urgence invalide (format FR attendu, ex: 06 12 34 56 78)."); return;
+    }
+    if(telEleve && !isValidFRPhone(telEleve)){
+      setFormError('⚠️ Téléphone élève invalide (format FR attendu).'); return;
+    }
+    if(telEleve && normPhone(telUrgence)===normPhone(telEleve)){
+      setFormError("⚠️ Le téléphone élève doit être différent du téléphone d'urgence."); return;
+    }
 
     // Conversion date naissance JJ-MM-AAAA -> ISO AAAA-MM-JJ
     let naissanceISO = naissance;
@@ -601,6 +581,12 @@ export default function Adhesion() {
             ) : null}
 
             {loading && <ActivityIndicator style={{ marginTop: 16, marginBottom: 24 }} />}
+
+            {formError ? (
+              <View style={{ backgroundColor: '#3f0000', borderRadius: 8, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#ef4444' }}>
+                <Text style={{ color: '#fca5a5', fontSize: 13, textAlign: 'center' }}>{formError}</Text>
+              </View>
+            ) : null}
 
             <TouchableOpacity
               onPress={onSubmit}
