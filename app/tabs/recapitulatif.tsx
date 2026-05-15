@@ -70,7 +70,7 @@ export default function Recapitulatif() {
       
       const r = await fetch(REMOTE_JSON_URL, {
         cache: 'force-cache', // Utiliser le cache HTTP agressivement
-        headers: { 'X-API-KEY': 'KEYOFSQUAD01@' }
+        headers: API_HEADERS
       });
       
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -109,10 +109,7 @@ export default function Recapitulatif() {
       // Envoi direct de la nouvelle liste pour écrasement
       const r = await fetch(REMOTE_JSON_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': 'KEYOFSQUAD01@'
-        },
+        headers: API_HEADERS,
         body: JSON.stringify({ data: arr })
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

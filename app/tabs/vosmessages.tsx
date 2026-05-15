@@ -52,7 +52,7 @@ export default function VosMessages() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(API_CONFIG.PUSH_HISTORY_URL, { cache: 'no-store' });
+        const res = await fetch(API_CONFIG.PUSH_HISTORY_URL, { cache: 'no-store', headers: { 'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e' } });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const arr = await res.json();
         if (Array.isArray(arr)) {

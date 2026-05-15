@@ -53,7 +53,7 @@ const isHoliday = (d: dayjs.Dayjs) =>
 
 const dayIndexMonday0 = (d: dayjs.Dayjs) => ((d.day() + 6) % 7);
 
-const ADMIN_PIN = '3107';
+const ADMIN_PIN = process.env.EXPO_PUBLIC_ADMIN_PIN ?? '';
 const KEY_ADMIN = 'cfsd91_admin_enabled';
 const KEY_IDENTIFIE = 'cfsd91_identifie';
 
