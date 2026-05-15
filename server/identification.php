@@ -53,7 +53,11 @@ function normalize($str) {
 }
 
 function checkPassword($input, $stored) {
-    // Comparaison en clair (mode mot de passe non haché)
+    // Si le mot de passe stocké est un hash bcrypt, utiliser password_verify
+    if (strlen($stored) >= 60 && str_starts_with($stored, '$2')) {
+        return password_verify($input, $stored);
+    }
+    // Sinon comparaison en clair
     return $input === $stored;
 }
 

@@ -58,8 +58,18 @@ if (!$eleve) {
     exit;
 }
 
-// Vérifier le mot de passe
-if (!isset($eleve['password']) || $eleve['password'] !== $password) {
+// Vérifier le mot de passe (supporte les hash bcrypt ET le texte clair)
+if (!isset($eleve['password'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Aucun mot de passe défini pour ce compte']);
+    exit;
+}
+$storedPwd = $eleve['password'];
+$passwordOk = (strlen($storedPwd) >= 60 && str_starts_with($storedPwd, '$2'))
+    ? password_verify($password, $storedPwd)
+    : ($storedPwd === $password);
+
+if (!$passwordOk) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Mot de passe incorrect']);
     exit;
