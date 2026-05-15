@@ -12,11 +12,13 @@ import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
+import { API_CONFIG, API_HEADERS } from '../../constants/config';
 // import { CameraConstants } from 'expo-camera';
 
 const STORAGE_KEY = 'eleves_cfsd91';
-const REMOTE_JSON_URL = 'https://cfsd91.com/eleves.php';
-const UPLOAD_URL      = 'https://cfsd91.com/eleves.php';
+const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
+const UPLOAD_URL = 'https://cfsd91.com/appli/php/eleves.php';
+const UPLOAD_FALLBACK_URL = API_CONFIG.ELEVES_FETCH_URL;
 const TARGET_JSON_NAME = 'eleves.json';
 
 type Eleve = {
@@ -78,6 +80,7 @@ export default function Adhesion() {
   const [isReglementLu, setIsReglementLu] = useState(false);
   
   const [loading,setLoading]=useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showPasswordInfo, setShowPasswordInfo] = useState(false);
   const [eleves, setEleves] = useState<Eleve[]>([]);
   
@@ -173,8 +176,9 @@ export default function Adhesion() {
   }, []);
   
   const onSubmit = async()=>{
+    if (submitting) return;
     if (!isReglementLu) {
-      alert('Vous devez accepter le règlement intérieur du CFSD91.');
+      Alert.alert('Règlement requis', 'Vous devez accepter le règlement intérieur du CFSD91 avant d\'envoyer.');
       return;
     }
     if(!nom.trim()||!prenom.trim()||!naissance||!jour||!discipline||!telUrgence.trim()){
@@ -205,21 +209,46 @@ export default function Adhesion() {
     };
 
     setLoading(true);
+    setSubmitting(true);
     try {
-      // Envoi POST au serveur
+      // Envoi POST au serveur avec timeout et fallback d'URL
       console.log('DEBUG: Envoi données:', JSON.stringify(d));
-      const response = await fetch(UPLOAD_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e'
-        },
-        body: JSON.stringify({ data: [d] })
-      });
-      console.log('DEBUG: Response status:', response.status);
-      if (!response.ok) {
-        throw new Error(`Erreur serveur: ${response.status}`);
+
+      const postWithTimeout = async (url: string) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+        try {
+          return await fetch(url, {
+            method: 'POST',
+            headers: API_HEADERS,
+            body: JSON.stringify({ data: [d] }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+      };
+
+      let response: Response | null = null;
+      let lastError: string | null = null;
+      for (const url of [UPLOAD_URL, UPLOAD_FALLBACK_URL]) {
+        try {
+          const current = await postWithTimeout(url);
+          if (current.ok) {
+            response = current;
+            break;
+          }
+          lastError = `Erreur serveur: ${current.status}`;
+        } catch (err: any) {
+          lastError = err?.name === 'AbortError' ? 'Délai dépassé (15s)' : (err?.message || 'Erreur réseau');
+        }
       }
+
+      if (!response) {
+        throw new Error(lastError || 'Impossible de joindre le serveur');
+      }
+
+      console.log('DEBUG: Response status:', response.status);
       const res = await response.json();
       console.log('DEBUG: Réponse serveur:', JSON.stringify(res));
       if (res.success || res.ok) {
@@ -246,6 +275,7 @@ export default function Adhesion() {
       Alert.alert('Erreur', e?.message || 'Impossible d\'envoyer au serveur');
     } finally {
       setLoading(false);
+      setSubmitting(false);
     }
   };
   
@@ -389,7 +419,7 @@ export default function Adhesion() {
       {/* Un seul bloc de formulaire */}
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={HEADER_HEIGHT + 12}>
-        <ScrollView style={{ flex:1, backgroundColor:'#000', paddingTop: HEADER_HEIGHT }} contentContainerStyle={{ padding:16, paddingBottom: 80 }}>
+        <ScrollView style={{ flex:1, backgroundColor:'#000', paddingTop: HEADER_HEIGHT }} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding:16, paddingBottom: 80 }}>
           <Stack.Screen options={{ title:'Adhésion' }} />
 
           <View style={s.card}>
@@ -446,7 +476,7 @@ export default function Adhesion() {
                     mode="date"
                     display="spinner"
                     maximumDate={new Date()}
-                    onChange={(event, selectedDate) => {
+                    onChange={(event: any, selectedDate?: Date) => {
                       if (Platform.OS === 'android') {
                         setShowDatePicker(false);
                       }
