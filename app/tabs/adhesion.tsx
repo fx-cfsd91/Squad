@@ -407,13 +407,6 @@ export default function Adhesion() {
         >
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Choisir une photo</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onSubmit}
-          accessibilityLabel="Envoyer inscription"
-          style={{ flex: 1, backgroundColor: '#b40a0a', paddingVertical: 10, paddingHorizontal: 6, borderRadius: 8, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Envoyer</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Un seul bloc de formulaire */}
@@ -608,6 +601,15 @@ export default function Adhesion() {
             ) : null}
 
             {loading && <ActivityIndicator style={{ marginTop: 16, marginBottom: 24 }} />}
+
+            <TouchableOpacity
+              onPress={onSubmit}
+              disabled={submitting}
+              accessibilityLabel="Envoyer inscription"
+              style={{ backgroundColor: submitting ? '#7f1d1d' : '#b40a0a', paddingVertical: 14, borderRadius: 10, marginTop: 8, marginBottom: 8, alignItems: 'center', opacity: submitting ? 0.7 : 1 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{submitting ? 'Envoi en cours...' : '✉️  Envoyer mon inscription'}</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
