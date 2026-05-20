@@ -53,7 +53,7 @@ const isHoliday = (d: dayjs.Dayjs) =>
 
 const dayIndexMonday0 = (d: dayjs.Dayjs) => ((d.day() + 6) % 7);
 
-const ADMIN_PIN = process.env.EXPO_PUBLIC_ADMIN_PIN ?? '';
+const ADMIN_PIN = process.env.EXPO_PUBLIC_ADMIN_PIN ?? '3107';
 const KEY_ADMIN = 'cfsd91_admin_enabled';
 const KEY_IDENTIFIE = 'cfsd91_identifie';
 
@@ -301,7 +301,7 @@ export default function Home() {
   };
 
   const submitPin = async () => {
-    if (pin.trim() === ADMIN_PIN) {
+    if (ADMIN_PIN.length > 0 && pin.trim() === ADMIN_PIN) {
       setAdmin(true);
       await AsyncStorage.setItem(KEY_ADMIN, '1');
       setPin('');
