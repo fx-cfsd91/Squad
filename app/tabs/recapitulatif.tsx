@@ -62,6 +62,7 @@ export default function Recapitulatif() {
   const [fileResults, setFileResults] = useState<Eleve[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [compressProgress, setCompressProgress] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; prenom: string; nom: string } | null>(null);
   const clean = (s?: any) => (s == null ? '' : String(s).trim());
 
   // ---- compression des photos (admin)
@@ -626,9 +627,9 @@ export default function Recapitulatif() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={[s.rowCard, { position: 'relative', width: cardWidth, overflow: 'visible', zIndex: 1 }]}>
-            <Pressable 
-              style={{ gap: 8, paddingRight: 60 }}
+          <View style={[s.rowCard, { width: cardWidth, flexDirection: 'row', alignItems: 'flex-start' }]}>
+            <Pressable
+              style={{ flex: 1, gap: 8 }}
               onPress={() => {
                 console.log('ID transmis à la fiche:', item.id);
                 router.push(`/tabs/fiche/${item.id}`);
@@ -638,7 +639,7 @@ export default function Recapitulatif() {
                 {item.photo ? (
                   <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={[s.photo, { width: photoSize, height: photoSize }]} />
                 ) : (
-                  <View style={[s.photo, { width: photoSize, height: photoSize, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}> 
+                  <View style={[s.photo, { width: photoSize, height: photoSize, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}>
                     <Ionicons name="person" size={24} color="#777" />
                   </View>
                 )}
@@ -668,38 +669,55 @@ export default function Recapitulatif() {
                 )}
               </View>
             </Pressable>
-            <TouchableOpacity 
-              style={{ 
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                width: 50, 
-                height: 50, 
-                borderRadius: 25, 
-                backgroundColor: '#b40a0a', 
-                justifyContent: 'center', 
+            <TouchableOpacity
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: '#b40a0a',
+                justifyContent: 'center',
                 alignItems: 'center',
                 borderWidth: 2,
                 borderColor: '#fff',
-                zIndex: 999
+                marginTop: 4,
+                marginLeft: 4,
+                flexShrink: 0,
               }}
               activeOpacity={0.7}
-              onPress={() => {
-                Alert.alert(
-                  'Supprimer élève',
-                  `Supprimer ${item.prenom} ${item.nom} ?`,
-                  [
-                    { text: 'Annuler', style: 'cancel' },
-                    { text: 'Supprimer', style: 'destructive', onPress: () => removeEleve(item.id) },
-                  ]
-                );
-              }}
+              onPress={() => setDeleteConfirm({ id: item.id, prenom: item.prenom, nom: item.nom })}
             >
-              <Ionicons name="close" size={28} color="#fff" />
+              <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
       />
+
+      {/* Confirmation suppression */}
+      {deleteConfirm && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.82)', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <View style={{ backgroundColor: '#1f2937', borderRadius: 16, padding: 24, marginHorizontal: 24, width: Math.min(360, width - 48) }}>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Supprimer élève</Text>
+            <Text style={{ color: '#9ca3af', fontSize: 14, marginBottom: 24 }}>
+              Supprimer {deleteConfirm.prenom} {deleteConfirm.nom} ?{'
+'}Cette action est irréversible.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                style={{ flex: 1, backgroundColor: '#374151', borderRadius: 8, padding: 12, alignItems: 'center' }}
+                onPress={() => setDeleteConfirm(null)}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600' }}>Annuler</Text>
+              </Pressable>
+              <Pressable
+                style={{ flex: 1, backgroundColor: '#b40a0a', borderRadius: 8, padding: 12, alignItems: 'center' }}
+                onPress={() => { const id = deleteConfirm.id; setDeleteConfirm(null); removeEleve(id); }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Supprimer</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* modal QR */}
       {qrId && null}
