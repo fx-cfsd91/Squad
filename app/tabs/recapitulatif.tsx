@@ -63,6 +63,7 @@ export default function Recapitulatif() {
   const [compressing, setCompressing] = useState(false);
   const [compressProgress, setCompressProgress] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; prenom: string; nom: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const clean = (s?: any) => (s == null ? '' : String(s).trim());
 
   // ---- compression des photos (admin)
@@ -265,30 +266,27 @@ export default function Recapitulatif() {
 
   // ---- supprimer un élève via l'API DELETE
   const removeEleve = useCallback(async (id: string) => {
+    // Suppression optimiste : retirer de la liste immédiatement
+    let removed: Eleve | undefined;
+    setData(prevData => {
+      removed = prevData.find(x => String(x.id) === String(id));
+      return prevData.filter(x => String(x.id) !== String(id));
+    });
+    setDeleteError(null);
     try {
-      console.log('🗑️ SUPPRESSION - Élève ID:', id);
-      
       const r = await fetch(REMOTE_JSON_URL, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'Mac131080' },
-        body: JSON.stringify({ id: id })
+        body: JSON.stringify({ id })
       });
-      
       if (!r.ok) {
-        console.log('❌ Réponse serveur:', r.status);
-        throw new Error(`HTTP ${r.status}`);
+        const body = await r.text();
+        throw new Error(`Serveur: HTTP ${r.status} — ${body.slice(0, 120)}`);
       }
-      
-      const result = await r.json();
-      console.log('✅ Réponse serveur:', result);
-      
-      // Retirer de la liste locale immédiatement
-      setData(prevData => prevData.filter(x => String(x.id) !== String(id)));
-      
-      Alert.alert('✅ Suppression réussie', `L'élève a été supprimé`);
     } catch (e: any) {
-      console.error('💥 Erreur suppression:', e.message);
-      Alert.alert('❌ Erreur suppression', e?.message || 'Erreur inconnue');
+      // Rollback : remettre l'élève dans la liste
+      if (removed) setData(prevData => [...prevData, removed as Eleve]);
+      setDeleteError(e?.message || 'Erreur inconnue');
     }
   }, []);
 
@@ -717,6 +715,18 @@ export default function Recapitulatif() {
             </View>
           </View>
         </View>
+      )}
+
+      {/* Bannière erreur suppression */}
+      {deleteError && (
+        <Pressable
+          style={{ position: 'absolute', bottom: 60, left: 16, right: 16, backgroundColor: '#7f1d1d', borderRadius: 10, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 9998 }}
+          onPress={() => setDeleteError(null)}
+        >
+          <Ionicons name="alert-circle" size={20} color="#fca5a5" />
+          <Text style={{ color: '#fca5a5', flex: 1, fontSize: 13 }}>{deleteError}</Text>
+          <Ionicons name="close" size={16} color="#fca5a5" />
+        </Pressable>
       )}
 
       {/* modal QR */}
