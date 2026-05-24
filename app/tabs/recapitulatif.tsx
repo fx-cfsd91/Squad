@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { router, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -59,7 +60,90 @@ export default function Recapitulatif() {
   const [fileSearchVisible, setFileSearchVisible] = useState(false);
   const [fileQuery, setFileQuery] = useState('');
   const [fileResults, setFileResults] = useState<Eleve[]>([]);
+  const [compressing, setCompressing] = useState(false);
+  const [compressProgress, setCompressProgress] = useState('');
   const clean = (s?: any) => (s == null ? '' : String(s).trim());
+
+  // ---- compression des photos (admin)
+  const compressBase64Web = (base64: string): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = document.createElement('img') as HTMLImageElement;
+      img.onload = () => {
+        const MAX = 400;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > MAX || h > MAX) {
+          if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('canvas')); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+        resolve(dataUrl.replace(/^data:image\/\w+;base64,/, ''));
+      };
+      img.onerror = () => reject(new Error('load'));
+      img.src = `data:image/jpeg;base64,${base64}`;
+    });
+
+  const compressBase64Native = async (base64: string, id: string): Promise<string> => {
+    const tempUri = `${FileSystem.cacheDirectory!}photo_cmp_${id}.jpg`;
+    await FileSystem.writeAsStringAsync(tempUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+    const r = await ImageManipulator.manipulateAsync(
+      tempUri,
+      [{ resize: { width: 400 } }],
+      { compress: 0.65, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    );
+    return r.base64 || base64;
+  };
+
+  const doCompressAll = async () => {
+    setCompressing(true);
+    const updated = [...data];
+    let done = 0, saved = 0;
+    const total = updated.filter(e => e.photo).length;
+    for (let i = 0; i < updated.length; i++) {
+      const eleve = updated[i];
+      if (!eleve.photo) continue;
+      done++;
+      setCompressProgress(`${done}/${total} – ${eleve.prenom} ${eleve.nom}`);
+      try {
+        const original = eleve.photo;
+        const compressed = Platform.OS === 'web'
+          ? await compressBase64Web(original)
+          : await compressBase64Native(original, eleve.id);
+        if (compressed && compressed.length < original.length) {
+          updated[i] = { ...eleve, photo: compressed };
+          saved++;
+        }
+      } catch (e) {
+        console.warn('Compression échouée pour', eleve.id, e);
+      }
+    }
+    setData(updated);
+    if (saved > 0) await uploadToServer(updated);
+    setCompressing(false);
+    setCompressProgress('');
+    Alert.alert('Compression terminée', `${saved} photo(s) compressée(s) sur ${total}.`);
+  };
+
+  const compressAllPhotos = () => {
+    const withPhoto = data.filter(e => e.photo && e.photo.length > 0);
+    if (withPhoto.length === 0) {
+      Alert.alert('Info', 'Aucun élève n\'a de photo enregistrée.');
+      return;
+    }
+    const totalKB = Math.round(withPhoto.reduce((acc, e) => acc + (e.photo ? e.photo.length * 0.75 / 1024 : 0), 0));
+    Alert.alert(
+      'Compresser les photos',
+      `${withPhoto.length} photo(s) — ~${totalKB} Ko au total\n\nChaque photo sera redimensionnée (max 400 px) et compressée en JPEG 65 %. Opération irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Compresser', style: 'destructive', onPress: doCompressAll },
+      ]
+    );
+  };
 
   // ---- actions serveur uniquement
   const fetchFromServer = async () => {
@@ -367,12 +451,24 @@ export default function Recapitulatif() {
             <Pressable onPress={exportToExcel} accessibilityLabel="Exporter Excel" style={{ padding: 6 }}>
               <Ionicons name="document" size={22} color="#b40a0a" />
             </Pressable>
+            <Pressable onPress={compressAllPhotos} accessibilityLabel="Compresser les photos" style={{ padding: 6 }}>
+              <Ionicons name="resize" size={22} color="#f59e0b" />
+            </Pressable>
             <Pressable onPress={() => router.back()} accessibilityLabel="Retour" style={{ padding: 6 }}>
               <Ionicons name="arrow-back" size={22} color="#000" />
             </Pressable>
           </View>
         )}
       />
+
+      {/* Overlay compression en cours */}
+      {compressing && (
+        <View style={{ position: 'absolute', inset: 0, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.82)', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
+          <ActivityIndicator size="large" color="#f59e0b" />
+          <Text style={{ color: '#f59e0b', fontWeight: '700', fontSize: 16, marginTop: 16 }}>Compression en cours…</Text>
+          <Text style={{ color: '#9ca3af', fontSize: 13, marginTop: 8, textAlign: 'center', paddingHorizontal: 32 }}>{compressProgress}</Text>
+        </View>
+      )}
 
       {/* File search modal */}
       {fileSearchVisible && (

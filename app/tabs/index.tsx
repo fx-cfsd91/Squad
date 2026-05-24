@@ -402,6 +402,36 @@ export default function Home() {
           )}
         </View>
 
+        {/* --- Carte de bienvenue élève avec photo --- */}
+        {identifie && eleveData && (
+          <Pressable
+            style={s.welcomeCard}
+            onPress={() => eleveData.id && router.push(`/tabs/fiche/${eleveData.id}`)}
+          >
+            <View style={s.welcomePhotoWrap}>
+              {eleveData.photo ? (
+                <Image
+                  source={{ uri: `data:image/jpeg;base64,${eleveData.photo}` }}
+                  style={s.welcomePhoto}
+                />
+              ) : (
+                <View style={[s.welcomePhoto, { backgroundColor: '#1f2937', justifyContent: 'center', alignItems: 'center' }]}>
+                  <Ionicons name="person" size={36} color="#9ca3af" />
+                </View>
+              )}
+              <View style={s.welcomeOnlineDot} />
+            </View>
+            <View style={s.welcomeInfo}>
+              <Text style={s.welcomeGreeting}>Bonjour 👋</Text>
+              <Text style={s.welcomeName}>{eleveData.prenom} {eleveData.nom}</Text>
+              {eleveData.discipline && (
+                <Text style={s.welcomeDiscipline}>{eleveData.discipline}{eleveData.ceinture ? ` · Ceinture ${eleveData.ceinture}` : ''}</Text>
+              )}
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#4b5563" />
+          </Pressable>
+        )}
+
         {/* --- Prochains cours et événements (visible pour tous) --- */}
         <View style={s.nextCoursesContainer}>
           <View style={s.nextCoursesHeader}>
@@ -812,6 +842,60 @@ const s = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: '#1f2937',
+  },
+  welcomeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    marginHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+    gap: 14,
+  },
+  welcomePhotoWrap: {
+    position: 'relative',
+  },
+  welcomePhoto: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: '#22c55e',
+  },
+  welcomeOnlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#22c55e',
+    borderWidth: 2,
+    borderColor: '#0f172a',
+  },
+  welcomeInfo: {
+    flex: 1,
+  },
+  welcomeGreeting: {
+    color: '#9ca3af',
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  welcomeName: {
+    color: '#f1f5f9',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  welcomeDiscipline: {
+    color: '#22c55e',
+    fontSize: 12,
+    marginTop: 3,
+    fontWeight: '500',
   },
   modeText: {
     fontSize: 14,
