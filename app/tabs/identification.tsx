@@ -210,20 +210,33 @@ export default function Identification() {
       console.log('✅ Authentification réussie!');
       const eleve = data.eleve;
 
-      // Eviter les erreurs de quota sur web: ne pas stocker les champs lourds (photo/base64)
-      const eleveLight = {
+      // Données complètes avec photo (pour affichage sur l'accueil)
+      const eleveWithPhoto = {
         id: eleve?.id,
         nom: eleve?.nom,
         prenom: eleve?.prenom,
         discipline: eleve?.discipline,
+        ceinture: eleve?.ceinture,
         email: eleve?.email,
         licence: eleve?.licence,
+        photo: eleve?.photo || '',
       };
-      
+      // Version sans photo (fallback si quota dépassé)
+      const eleveLight = { ...eleveWithPhoto, photo: '' };
+
       // Sauvegarder l'état d'identification et les données de l'élève
+      let stored = false;
+      try {
+        await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveWithPhoto));
+        stored = true;
+      } catch (_) {
+        // quota web dépassé : on stocke sans la photo
+      }
+      if (!stored) {
+        await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveLight));
+      }
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(eleveLight));
       await AsyncStorage.setItem('cfsd91_identifie', '1');
-      await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(eleveLight));
       
       router.replace('/tabs');
     } catch (err) {
