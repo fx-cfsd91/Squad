@@ -275,9 +275,9 @@ export default function Recapitulatif() {
     setDeleteError(null);
     try {
       const r = await fetch(REMOTE_JSON_URL, {
-        method: 'DELETE',
+        method: 'POST',
         headers: API_HEADERS,
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ action: 'delete', id })
       });
       if (!r.ok) {
         const body = await r.text();

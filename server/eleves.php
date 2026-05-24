@@ -72,6 +72,29 @@ switch ($method) {
     case 'POST':
         // Ajouter un ou plusieurs nouveaux élèves
         $input = json_decode(file_get_contents('php://input'), true);
+
+        // --- Suppression via POST (évite les problèmes avec la méthode DELETE) ---
+        if (isset($input['action']) && $input['action'] === 'delete') {
+            if (!isset($input['id'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID']);
+                exit;
+            }
+            $eleves = readEleves($elevesFile);
+            $initialCount = count($eleves);
+            $eleves = array_values(array_filter($eleves, function($e) use ($input) {
+                return $e['id'] !== $input['id'];
+            }));
+            if (count($eleves) === $initialCount) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found']);
+                exit;
+            }
+            saveEleves($elevesFile, $eleves);
+            echo json_encode(['success' => true, 'message' => 'Eleve deleted']);
+            exit;
+        }
+
         // Log temporaire pour debug : retour de la donnée reçue et du champ photo
         if (!$input) {
             http_response_code(400);
