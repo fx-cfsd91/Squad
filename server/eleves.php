@@ -224,7 +224,10 @@ switch ($method) {
             echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID']);
             exit;
         }
-        
+
+        $eleves = readEleves($elevesFile);
+        $initialCount = count($eleves);
+
         $eleves = array_values(array_filter($eleves, function($eleve) use ($input) {
             return $eleve['id'] !== $input['id'];
         }));
