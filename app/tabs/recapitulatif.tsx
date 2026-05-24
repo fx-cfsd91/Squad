@@ -267,10 +267,9 @@ export default function Recapitulatif() {
     try {
       console.log('🗑️ SUPPRESSION - Élève ID:', id);
       
-      // Utiliser DELETE avec juste l'ID
       const r = await fetch(REMOTE_JSON_URL, {
         method: 'DELETE',
-        headers: API_HEADERS,
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'Mac131080' },
         body: JSON.stringify({ id: id })
       });
       
@@ -282,13 +281,8 @@ export default function Recapitulatif() {
       const result = await r.json();
       console.log('✅ Réponse serveur:', result);
       
-      // Retirer de la liste locale
-      console.log('🗑️ Suppression locale en cours pour ID:', id);
-      setData(prevData => {
-        const next = prevData.filter(x => String(x.id) !== String(id));
-        console.log('📊 État local après suppression:', next.length, 'élèves');
-        return next;
-      });
+      // Retirer de la liste locale immédiatement
+      setData(prevData => prevData.filter(x => String(x.id) !== String(id)));
       
       Alert.alert('✅ Suppression réussie', `L'élève a été supprimé`);
     } catch (e: any) {
