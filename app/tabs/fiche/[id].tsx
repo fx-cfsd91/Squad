@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystemLegacy from 'expo-file-system';
 import HeaderBar from '../../../components/header-bar';
-import { API_CONFIG } from '../../../constants/config';
+import { API_CONFIG, API_HEADERS } from '../../../constants/config';
 import { Eleve } from '../../../constants/types';
 import { fetchEleves } from '../../../lib/api';
 
@@ -122,10 +122,7 @@ export default function FicheEleve() {
 
 			const response = await fetch('https://cfsd91.com/eleves.php', {
 				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-KEY': 'Mac131080',
-				},
+				headers: API_HEADERS,
 				body: JSON.stringify(updateData),
 			});
 

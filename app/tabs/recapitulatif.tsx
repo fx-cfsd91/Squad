@@ -161,7 +161,7 @@ export default function Recapitulatif() {
         try {
           const res = await fetch(REMOTE_JSON_URL, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'Mac131080' },
+            headers: API_HEADERS,
             body: JSON.stringify({ id: upd.id, photo: upd.photo }),
           });
           if (!res.ok) saveErrors++;
@@ -276,7 +276,7 @@ export default function Recapitulatif() {
     try {
       const r = await fetch(REMOTE_JSON_URL, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'Mac131080' },
+        headers: API_HEADERS,
         body: JSON.stringify({ id })
       });
       if (!r.ok) {
