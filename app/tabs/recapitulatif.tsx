@@ -100,12 +100,38 @@ export default function Recapitulatif() {
 
   const doCompressAll = async () => {
     setCompressing(true);
-    const updated = [...data];
+    setCompressProgress('Chargement des photos depuis le serveur…');
+
+    // 1. Récupération fraîche (sans cache) pour avoir les photos à jour
+    let freshData: Eleve[] = data;
+    try {
+      const r = await fetch(REMOTE_JSON_URL, { cache: 'no-store', headers: API_HEADERS });
+      if (r.ok) {
+        const raw = await r.json();
+        if (Array.isArray(raw)) freshData = raw;
+        else if (raw?.data) freshData = raw.data;
+        else if (raw?.eleves) freshData = raw.eleves;
+      }
+    } catch (e) {
+      console.warn('Fetch sans cache échoué, on utilise les données locales', e);
+    }
+
+    const updated = freshData.map(e => ({ ...e }));
+    const withPhoto = updated.filter(e => e.photo && e.photo.length > 0);
+    const total = withPhoto.length;
+
+    if (total === 0) {
+      setCompressing(false);
+      setCompressProgress('');
+      Alert.alert('Info', 'Aucune photo trouvée dans les données du serveur.');
+      return;
+    }
+
     let done = 0, saved = 0;
-    const total = updated.filter(e => e.photo).length;
+
     for (let i = 0; i < updated.length; i++) {
       const eleve = updated[i];
-      if (!eleve.photo) continue;
+      if (!eleve.photo || eleve.photo.length === 0) continue;
       done++;
       setCompressProgress(`${done}/${total} – ${eleve.prenom} ${eleve.nom}`);
       try {
@@ -121,11 +147,39 @@ export default function Recapitulatif() {
         console.warn('Compression échouée pour', eleve.id, e);
       }
     }
-    setData(updated);
-    if (saved > 0) await uploadToServer(updated);
-    setCompressing(false);
-    setCompressProgress('');
-    Alert.alert('Compression terminée', `${saved} photo(s) compressée(s) sur ${total}.`);
+
+    // 2. Sauvegarde individuelle via PUT pour chaque photo modifiée
+    if (saved > 0) {
+      let saveErrors = 0;
+      for (let i = 0; i < updated.length; i++) {
+        const orig = freshData[i];
+        const upd = updated[i];
+        if (!upd.photo || upd.photo === orig?.photo) continue; // non modifié
+        setCompressProgress(`Sauvegarde ${upd.prenom} ${upd.nom}…`);
+        try {
+          const res = await fetch(REMOTE_JSON_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-API-KEY': 'Mac131080' },
+            body: JSON.stringify({ id: upd.id, photo: upd.photo }),
+          });
+          if (!res.ok) saveErrors++;
+        } catch (e) {
+          saveErrors++;
+          console.warn('Sauvegarde échouée pour', upd.id, e);
+        }
+      }
+      setData(updated);
+      setCompressing(false);
+      setCompressProgress('');
+      Alert.alert(
+        'Compression terminée',
+        `${saved} photo(s) compressée(s) sur ${total}.${saveErrors > 0 ? `\n⚠️ ${saveErrors} erreur(s) de sauvegarde.` : ''}`
+      );
+    } else {
+      setCompressing(false);
+      setCompressProgress('');
+      Alert.alert('Compression terminée', `Aucune photo n'a pu être réduite (déjà optimisées ou erreur).`);
+    }
   };
 
   const compressAllPhotos = () => {
