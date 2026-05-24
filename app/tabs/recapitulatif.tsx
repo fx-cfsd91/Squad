@@ -697,10 +697,10 @@ export default function Recapitulatif() {
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.82)', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
           <View style={{ backgroundColor: '#1f2937', borderRadius: 16, padding: 24, marginHorizontal: 24, width: Math.min(360, width - 48) }}>
             <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Supprimer élève</Text>
-            <Text style={{ color: '#9ca3af', fontSize: 14, marginBottom: 24 }}>
-              Supprimer {deleteConfirm.prenom} {deleteConfirm.nom} ?{'
-'}Cette action est irréversible.
+            <Text style={{ color: '#9ca3af', fontSize: 14, marginBottom: 6 }}>
+              Supprimer {deleteConfirm.prenom} {deleteConfirm.nom} ?
             </Text>
+            <Text style={{ color: '#6b7280', fontSize: 13, marginBottom: 24 }}>Cette action est irréversible.</Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable
                 style={{ flex: 1, backgroundColor: '#374151', borderRadius: 8, padding: 12, alignItems: 'center' }}
