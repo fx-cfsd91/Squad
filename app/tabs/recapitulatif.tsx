@@ -626,7 +626,7 @@ export default function Recapitulatif() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={[s.rowCard, { position: 'relative', width: cardWidth }]}>
+          <View style={[s.rowCard, { position: 'relative', width: cardWidth, overflow: 'visible', zIndex: 1 }]}>
             <Pressable 
               style={{ gap: 8, paddingRight: 60 }}
               onPress={() => {
@@ -685,32 +685,14 @@ export default function Recapitulatif() {
               }}
               activeOpacity={0.7}
               onPress={() => {
-                console.log('🔴 CROIX CLIQUÉE pour:', item.id, item.prenom, item.nom);
-                
-                // Web: window.confirm() | Mobile: Alert.alert()
-                const isWeb = typeof window !== 'undefined';
-                
-                if (isWeb && window.confirm) {
-                  // Sur Web
-                  if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${item.prenom} ${item.nom} ?`)) {
-                    console.log('✅ Confirmation Web - suppression');
-                    removeEleve(item.id);
-                  }
-                } else {
-                  // Sur Mobile
-                  Alert.alert(
-                    'Supprimer élève',
-                    `Êtes-vous sûr de vouloir supprimer ${item.prenom} ${item.nom} ?`,
-                    [
-                      { text: 'Annuler', style: 'cancel' },
-                      { 
-                        text: 'Supprimer', 
-                        onPress: () => removeEleve(item.id),
-                        style: 'destructive'
-                      }
-                    ]
-                  );
-                }
+                Alert.alert(
+                  'Supprimer élève',
+                  `Supprimer ${item.prenom} ${item.nom} ?`,
+                  [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Supprimer', style: 'destructive', onPress: () => removeEleve(item.id) },
+                  ]
+                );
               }}
             >
               <Ionicons name="close" size={28} color="#fff" />
