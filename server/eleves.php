@@ -216,35 +216,12 @@ switch ($method) {
         break;
         
     case 'DELETE':
-        // Supprimer un élève
+        // Supprimer un élève (admin uniquement - clé API déjà vérifiée en haut)
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input || !isset($input['id']) || !isset($input['password'])) {
+        if (!$input || !isset($input['id'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID or password']);
-            exit;
-        }
-        
-        $eleves = readEleves($elevesFile);
-        $initialCount = count($eleves);
-
-        $target = null;
-        foreach ($eleves as $eleve) {
-            if (($eleve['id'] ?? null) === $input['id']) {
-                $target = $eleve;
-                break;
-            }
-        }
-
-        if (!$target) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found']);
-            exit;
-        }
-
-        if (!isset($target['password']) || (string)$target['password'] !== (string)$input['password']) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized', 'message' => 'Mot de passe incorrect']);
+            echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID']);
             exit;
         }
         
