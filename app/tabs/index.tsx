@@ -335,7 +335,7 @@ export default function Home() {
         <View style={s.topbar}>
           <View>
             <Text style={s.headerTitle}>Accueil</Text>
-            <Text style={{color:'#999',fontSize:10,marginTop:2}}>Version V2.0 webapp</Text>
+            <Text style={{color:'#999',fontSize:10,marginTop:2}}>Version V3.0 webapp</Text>
           </View>
           <View style={s.topRight}>
             <Pressable style={s.iconBtn} onPress={toggleAdmin}>
