@@ -6,7 +6,6 @@ export default function TabsLayout() {
     <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
       <Tabs.Screen name="index" options={{ title: 'Accueil' }} />
       <Tabs.Screen name="adhesion" options={{ title: 'Adhésion' }} />
-      <Tabs.Screen name="adhesion_test" options={{ title: 'Test Admin', href: null }} />
       <Tabs.Screen name="identification" options={{ title: 'Identification' }} />
       <Tabs.Screen name="recapitulatif" options={{ title: 'Récapitulatif' }} />
       <Tabs.Screen name="evaluations" options={{ title: 'Evaluations' }} />

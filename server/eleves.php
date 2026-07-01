@@ -52,7 +52,7 @@ function saveEleves($file, $data) {
 switch ($method) {
     case 'GET':
         // Récupérer tous les élèves - SÉCURISÉ avec authentification
-        logApiAccess($method, $apiKey, 200, 'Fetching all students');
+        logApiAccess($method, $CURRENT_API_KEY, 200, 'Fetching all students');
         
         // Récupérer les données
         $data = readEleves($elevesFile);
@@ -95,19 +95,11 @@ switch ($method) {
             exit;
         }
 
-        // Log temporaire pour debug : retour de la donnée reçue et du champ photo
         if (!$input) {
             http_response_code(400);
-            logApiAccess($method, $apiKey, 400, 'Invalid JSON');
+            logApiAccess($method, $CURRENT_API_KEY, 400, 'Invalid JSON');
             echo json_encode(['error' => 'Bad Request', 'message' => 'Invalid JSON']);
             exit;
-        }
-        // Afficher le champ photo reçu (pour debug)
-        $debugPhoto = '';
-        if (isset($input['photo'])) {
-            $debugPhoto = substr($input['photo'], 0, 50) . (strlen($input['photo']) > 50 ? '...' : '');
-        } elseif (isset($input['data'][0]['photo'])) {
-            $debugPhoto = substr($input['data'][0]['photo'], 0, 50) . (strlen($input['data'][0]['photo']) > 50 ? '...' : '');
         }
         // Accepter soit un tableau de data soit directement les données
         $elevesToAdd = isset($input['data']) ? $input['data'] : [$input];
@@ -159,17 +151,12 @@ switch ($method) {
             $addedEleves[] = $newEleve;
         }
         saveEleves($elevesFile, $eleves);
-        logApiAccess($method, $apiKey, 201, 'Created ' . count($addedEleves) . ' student(s)');
-        // Réponse enrichie pour debug
+        logApiAccess($method, $CURRENT_API_KEY, 201, 'Created ' . count($addedEleves) . ' student(s)');
         echo json_encode([
             'success' => true,
             'ok' => true,
             'message' => count($addedEleves) . ' élève(s) ajouté(s)',
             'eleves' => $addedEleves,
-            'debug' => [
-                'input' => $input,
-                'photo' => $debugPhoto
-            ]
         ]);
         break;
         
@@ -186,7 +173,7 @@ switch ($method) {
         // Vérifier si le fichier existe
         if (!file_exists($elevesFile)) {
             http_response_code(500);
-            logApiAccess($method, $apiKey, 500, "File not found: $elevesFile");
+            logApiAccess($method, $CURRENT_API_KEY, 500, "File not found: $elevesFile");
             echo json_encode(['error' => 'Server Error', 'message' => 'Eleves file not found', 'path' => $elevesFile, 'exists' => file_exists($elevesFile)]);
             exit;
         }
@@ -194,7 +181,7 @@ switch ($method) {
         $eleves = readEleves($elevesFile);
         if (empty($eleves)) {
             http_response_code(500);
-            logApiAccess($method, $apiKey, 500, "Eleves data is empty from: $elevesFile");
+            logApiAccess($method, $CURRENT_API_KEY, 500, "Eleves data is empty from: $elevesFile");
             echo json_encode(['error' => 'Server Error', 'message' => 'Eleves data is empty', 'path' => $elevesFile]);
             exit;
         }
@@ -221,7 +208,7 @@ switch ($method) {
         
         if (!$eleveFound) {
             http_response_code(404);
-            logApiAccess($method, $apiKey, 404, "Student not found: {$input['id']}");
+            logApiAccess($method, $CURRENT_API_KEY, 404, "Student not found: {$input['id']}");
             echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found', 'searchId' => $input['id']]);
             exit;
         }
@@ -229,12 +216,12 @@ switch ($method) {
         // Sauvegarder les modifications
         if (!saveEleves($elevesFile, $eleves)) {
             http_response_code(500);
-            logApiAccess($method, $apiKey, 500, "Failed to save eleves to: $elevesFile");
+            logApiAccess($method, $CURRENT_API_KEY, 500, "Failed to save eleves to: $elevesFile");
             echo json_encode(['error' => 'Server Error', 'message' => 'Failed to save changes', 'path' => $elevesFile]);
             exit;
         }
         
-        logApiAccess($method, $apiKey, 200, 'Updated student: ' . $input['id']);
+        logApiAccess($method, $CURRENT_API_KEY, 200, 'Updated student: ' . $input['id']);
         echo json_encode(['success' => true, 'message' => 'Eleve updated successfully']);
         break;
         
@@ -262,7 +249,7 @@ switch ($method) {
         }
         
         saveEleves($elevesFile, $eleves);
-        logApiAccess($method, $apiKey, 200, 'Deleted student: ' . $input['id']);
+        logApiAccess($method, $CURRENT_API_KEY, 200, 'Deleted student: ' . $input['id']);
         echo json_encode(['success' => true, 'message' => 'Eleve deleted']);
         break;
         

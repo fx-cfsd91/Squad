@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import * as FileSystemLegacy from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 import HeaderBar from '../../../components/header-bar';
 import { API_CONFIG, API_HEADERS } from '../../../constants/config';
 import { Eleve } from '../../../constants/types';
@@ -46,8 +46,6 @@ export default function FicheEleve() {
 				const eleves = await fetchEleves();
 				const found = eleves.find(e => String(e.id) === String(id));
 				if (!found) throw new Error('Élève introuvable');
-				console.log('DEBUG - Élève trouvé:', found);
-				console.log('DEBUG - Password:', found.password);
 				setEleve(found);
 				setEditData({
 					photo: found.photo || '',
@@ -85,7 +83,7 @@ export default function FicheEleve() {
 				const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
 				if (base64) setEditData({ ...editData, photo: base64 });
 			} else if (uri) {
-				const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
+				const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
 				setEditData({ ...editData, photo: base64 });
 			}
 		} catch (e) {

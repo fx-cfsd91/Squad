@@ -82,29 +82,11 @@ export default function Home() {
     })();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const id = await AsyncStorage.getItem(KEY_IDENTIFIE);
-        const eleveId = await AsyncStorage.getItem('cfsd91_eleve_data');
-        setIdentifie(id === '1');
-        if (eleveId) {
-          try {
-            setEleveData(JSON.parse(eleveId));
-          } catch (e) {
-            console.error('Erreur parsing élève:', e);
-          }
-        }
-      })();
-    }, [])
-  );
-  
   const loadCoursesData = async () => {
     try {
       const data = await fetchCourses();
       setCoursesData({ courses: data });
     } catch (error) {
-      console.error('Erreur fetch courses:', error);
       setCoursesData({ courses: [] });
     }
   };
@@ -114,7 +96,6 @@ export default function Home() {
       const data = await fetchEvents();
       setEventsData({ events: data });
     } catch (error) {
-      console.error('Erreur fetch events:', error);
       setEventsData({ events: [] });
     }
   };
@@ -125,8 +106,12 @@ export default function Home() {
         const id = await AsyncStorage.getItem(KEY_IDENTIFIE);
         setIdentifie(id === '1');
         if (id === '1') {
-          const data = await AsyncStorage.getItem('cfsd91_eleve_data');
-          setEleveData(data ? JSON.parse(data) : null);
+          const raw = await AsyncStorage.getItem('cfsd91_eleve_data');
+          try {
+            setEleveData(raw ? JSON.parse(raw) : null);
+          } catch {
+            setEleveData(null);
+          }
         } else {
           setEleveData(null);
         }

@@ -1,6 +1,6 @@
 // lib/sync.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
+import { AppState } from 'react-native';
 
 export type CourseSlot = {
   id: string;
@@ -16,9 +16,10 @@ export type CourseSlot = {
   details?: string;
 };
 
-const SERVER_JSON = 'https://cfsd91.com/priv/read.php';
-const SAVE_ENDPOINT = 'https://cfsd91.com/priv/save.php'; // mettre à jour selon ton hébergement
-const API_KEY = 'REMPLACE_PAR_TA_CLE_SECRETE';
+import { API_CONFIG, API_HEADERS } from '../constants/config';
+
+const SERVER_JSON = API_CONFIG.COURSES_URL;
+const SAVE_ENDPOINT = API_CONFIG.COURSES_URL;
 const QUEUE_KEY = '@kravmaga_sync_queue';
 const CACHE_KEY = '@kravmaga_calendar_slots';
 
@@ -38,10 +39,7 @@ export async function fetchRemoteSlots(): Promise<CourseSlot[]> {
 export async function postToServer(slots: CourseSlot[]) {
   const res = await fetch(SAVE_ENDPOINT, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-KEY': API_KEY,
-    },
+    headers: API_HEADERS,
     body: JSON.stringify(slots),
   });
   if (!res.ok) throw new Error('Save failed');
@@ -81,8 +79,8 @@ export async function saveSlots(slots: CourseSlot[]) {
 }
 
 export function startAutoSync() {
-  NetInfo.addEventListener(state => {
-    if (state.isConnected) {
+  AppState.addEventListener('change', (nextState) => {
+    if (nextState === 'active') {
       flushQueue().catch(err => console.warn('FlushQueue error', err));
     }
   });

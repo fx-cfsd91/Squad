@@ -16,7 +16,7 @@ import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { API_CONFIG, EVENT_TYPE_COLORS } from '../../constants/config';
 import { Event } from '../../constants/types';
 import { createEvent, fetchEvents, updateEvent, deleteEvent } from '../../lib/api';
-import { formatDate, generateUUID } from '../../lib/utils';
+import { generateUUID } from '../../lib/utils';
 
 const EVENT_TYPES: { [key: string]: { label: string; color: string } } = {
   competition: { label: 'Compétition', color: '#ef4444' },
@@ -178,12 +178,11 @@ export default function EventsScreen() {
     }
   };
 
-  // Formater une date pour l'affichage
-  const formatDate = (dateStr: string): string => {
+  const formatDateLong = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { 
+    return date.toLocaleDateString('fr-FR', {
       weekday: 'long',
-      day: 'numeric', 
+      day: 'numeric',
       month: 'long',
       year: 'numeric'
     });
@@ -274,7 +273,7 @@ export default function EventsScreen() {
                       <View style={s.eventInfo}>
                         <Ionicons name="calendar-outline" size={14} color="#64748b" />
                         <Text style={[s.eventInfoText, !event.visible && s.inactiveText]}>
-                          {formatDate(event.date)}
+                          {formatDateLong(event.date)}
                         </Text>
                       </View>
                       {(event.startTime || event.endTime) && (

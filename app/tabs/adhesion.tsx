@@ -1,11 +1,9 @@
-// CameraType n'est pas une valeur, utiliser Camera.Constants.Type.front
 // app/tabs/adhesion.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
-import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
@@ -13,28 +11,12 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
 import { API_CONFIG, API_HEADERS } from '../../constants/config';
-// import { CameraConstants } from 'expo-camera';
+import { Eleve } from '../../constants/types';
+import { generateUUID } from '../../lib/utils';
 
 const STORAGE_KEY = 'eleves_cfsd91';
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
-const UPLOAD_URL = 'https://cfsd91.com/appli/php/eleves.php';
-const UPLOAD_FALLBACK_URL = API_CONFIG.ELEVES_FETCH_URL;
-const TARGET_JSON_NAME = 'eleves.json';
-
-type Eleve = {
-  id:string; nom:string; prenom:string; naissance:string;
-  jour:string; discipline:string; combattant?:boolean; etudiant?:boolean; renouvellement?:boolean;
-  autorisationDepartSeul?:boolean;
-  telUrgence?:string; telEleve?:string; email?:string; adresse?:string;
-  poids?: number | null; licence?:string; ceinture?:string; photo?:string;
-  createdAt:string;
-  password: string;
-};
-
-const uuid = () =>
-  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{
-    const r = (Math.random()*16)|0; const v = c==='x'? r : (r&0x3)|0x8; return v.toString(16);
-  });
+const UPLOAD_URL = API_CONFIG.ELEVES_APPEND_URL;
 
 const normPhone = (p='') => (p+'').replace(/\D+/g,'').replace(/^0033/,'0').replace(/^33/,'0');
 const isValidFRPhone = (p='') => /^0[1-9]\d{8}$/.test(normPhone(p));
@@ -180,7 +162,7 @@ export default function Adhesion() {
     }
 
     const d:Eleve = {
-      id: uuid(), nom: nom.trim(), prenom: normalizeString(prenom.trim()), naissance: naissanceISO, jour, discipline,
+      id: generateUUID(), nom: nom.trim(), prenom: normalizeString(prenom.trim()), naissance: naissanceISO, jour, discipline,
       combattant: isCompetiteur, etudiant: isEtudiant, renouvellement: isRenouvellement, autorisationDepartSeul: !isAutorisationDepartSeul, telUrgence: telUrgence.trim(), telEleve: telEleve.trim(),
       email: email.trim(), adresse: adresse.trim(), poids: poids ? Number(poids) : null, licence: licence.trim(),
       ceinture, photo: photo.substring(0, 5000000), // Limiter la taille de la photo à 5MB
@@ -211,7 +193,7 @@ export default function Adhesion() {
 
       let response: Response | null = null;
       let lastError: string | null = null;
-      for (const url of [UPLOAD_URL, UPLOAD_FALLBACK_URL]) {
+      for (const url of [UPLOAD_URL]) {
         try {
           const current = await postWithTimeout(url);
           if (current.ok) {
@@ -352,7 +334,7 @@ export default function Adhesion() {
               const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
               if (base64) setPhoto(base64);
             } else if (uri) {
-              const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
+              const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
               setPhoto(base64);
             }
           }}
@@ -378,7 +360,7 @@ export default function Adhesion() {
               const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
               if (base64) setPhoto(base64);
             } else if (uri) {
-              const base64 = await FileSystemLegacy.readAsStringAsync(uri, { encoding: 'base64' });
+              const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
               setPhoto(base64);
             }
           }}

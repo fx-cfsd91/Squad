@@ -57,8 +57,8 @@ export default function Presence() {
         } catch { history = []; }
       }
       history.push(newPresence);
-      console.log('💾 Présences prêtes pour export:', presentEleves.length);
-      Alert.alert('✅ Présences prêtes', `${presentEleves.length} élève(s) présent(s). Utilisez l'export pour partager.`);
+      await AsyncStorage.setItem(STORAGE_KEYS.PRESENCE, JSON.stringify(history));
+      Alert.alert('✅ Présences enregistrées', `${presentEleves.length} élève(s) présent(s). Utilisez l'export pour partager.`);
     } catch (e) {
       Alert.alert('Erreur', 'Impossible d’enregistrer les présences.');
     }

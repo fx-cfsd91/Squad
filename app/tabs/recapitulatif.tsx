@@ -90,8 +90,8 @@ export default function Recapitulatif() {
     });
 
   const compressBase64Native = async (base64: string, id: string): Promise<string> => {
-    const tempUri = `${FileSystem.cacheDirectory!}photo_cmp_${id}.jpg`;
-    await FileSystem.writeAsStringAsync(tempUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+    const tempUri = `${(FileSystem as any).cacheDirectory ?? (FileSystem as any).documentDirectory ?? ''}photo_cmp_${id}.jpg`;
+    await FileSystem.writeAsStringAsync(tempUri, base64, { encoding: 'base64' as any });
     const r = await ImageManipulator.manipulateAsync(
       tempUri,
       [{ resize: { width: 400 } }],
