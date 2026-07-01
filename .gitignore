@@ -1,3 +1,6 @@
+# Claude Code (données privées - ne jamais committer)
+.claude/
+
 # Fichiers volumineux et backups
 build-apk/
 *.zip
