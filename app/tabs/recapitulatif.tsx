@@ -4,7 +4,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { router, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -209,12 +209,12 @@ export default function Recapitulatif() {
       console.log('🌐 Chargement des élèves...');
       
       const r = await fetch(REMOTE_JSON_URL, {
-        cache: 'force-cache', // Utiliser le cache HTTP agressivement
+        cache: 'no-store',
         headers: API_HEADERS
       });
-      
+
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      
+
       let arrRaw: any = await r.json();
       console.log('Server response fetchFromServer type:', typeof arrRaw, Object.keys(arrRaw || {}));
       
@@ -422,12 +422,7 @@ export default function Recapitulatif() {
     return result;
   }, [data, q]);
 
-  // ---- init - charger uniquement depuis le serveur
-  useEffect(() => {
-    loadElevesFromServer();
-  }, []);
-
-  // Rafraîchir quand on revient sur la page
+  // Charger au focus (couvre le montage initial ET le retour sur la page)
   useFocusEffect(
     useCallback(() => {
       loadElevesFromServer();
@@ -438,9 +433,9 @@ export default function Recapitulatif() {
     try {
       setLoading(true);
       console.log('🌐 Chargement des élèves...');
-      
+
       const r = await fetch(REMOTE_JSON_URL, {
-        cache: 'force-cache', // Utiliser le cache HTTP agressivement
+        cache: 'no-store',
         headers: API_HEADERS
       });
       
