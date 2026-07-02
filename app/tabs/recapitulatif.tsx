@@ -64,7 +64,17 @@ export default function Recapitulatif() {
   const [compressProgress, setCompressProgress] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; prenom: string; nom: string } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  
+  const isMountedRef = React.useRef(true);
+  
   const clean = (s?: any) => (s == null ? '' : String(s).trim());
+  
+  // Cleanup quand le composant est démonté
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // ---- compression des photos (admin)
   const compressBase64Web = (base64: string): Promise<string> =>
@@ -118,14 +128,18 @@ export default function Recapitulatif() {
       console.warn('Fetch sans cache échoué, on utilise les données locales', e);
     }
 
+    if (!isMountedRef.current) return;
+
     const updated = freshData.map(e => ({ ...e }));
     const withPhoto = updated.filter(e => e.photo && e.photo.length > 0);
     const total = withPhoto.length;
 
     if (total === 0) {
-      setCompressing(false);
-      setCompressProgress('');
-      Alert.alert('Info', 'Aucune photo trouvée dans les données du serveur.');
+      if (isMountedRef.current) {
+        setCompressing(false);
+        setCompressProgress('');
+        Alert.alert('Info', 'Aucune photo trouvée dans les données du serveur.');
+      }
       return;
     }
 
@@ -135,6 +149,9 @@ export default function Recapitulatif() {
       const eleve = updated[i];
       if (!eleve.photo || eleve.photo.length === 0) continue;
       done++;
+      
+      if (!isMountedRef.current) return;
+      
       setCompressProgress(`${done}/${total} – ${eleve.prenom} ${eleve.nom}`);
       try {
         const original = eleve.photo;
@@ -150,6 +167,8 @@ export default function Recapitulatif() {
       }
     }
 
+    if (!isMountedRef.current) return;
+
     // 2. Sauvegarde individuelle via PUT pour chaque photo modifiée
     if (saved > 0) {
       let saveErrors = 0;
@@ -157,6 +176,9 @@ export default function Recapitulatif() {
         const orig = freshData[i];
         const upd = updated[i];
         if (!upd.photo || upd.photo === orig?.photo) continue; // non modifié
+        
+        if (!isMountedRef.current) return;
+        
         setCompressProgress(`Sauvegarde ${upd.prenom} ${upd.nom}…`);
         try {
           const res = await fetch(REMOTE_JSON_URL, {
@@ -170,6 +192,9 @@ export default function Recapitulatif() {
           console.warn('Sauvegarde échouée pour', upd.id, e);
         }
       }
+      
+      if (!isMountedRef.current) return;
+      
       setData(updated);
       setCompressing(false);
       setCompressProgress('');
@@ -178,9 +203,11 @@ export default function Recapitulatif() {
         `${saved} photo(s) compressée(s) sur ${total}.${saveErrors > 0 ? `\n⚠️ ${saveErrors} erreur(s) de sauvegarde.` : ''}`
       );
     } else {
-      setCompressing(false);
-      setCompressProgress('');
-      Alert.alert('Compression terminée', `Aucune photo n'a pu être réduite (déjà optimisées ou erreur).`);
+      if (isMountedRef.current) {
+        setCompressing(false);
+        setCompressProgress('');
+        Alert.alert('Compression terminée', `Aucune photo n'a pu être réduite (déjà optimisées ou erreur).`);
+      }
     }
   };
 
@@ -213,6 +240,8 @@ export default function Recapitulatif() {
         headers: API_HEADERS
       });
 
+      if (!isMountedRef.current) return;
+
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
       let arrRaw: any = await r.json();
@@ -229,6 +258,8 @@ export default function Recapitulatif() {
       
       if (!Array.isArray(arr)) throw new Error('JSON inattendu (tableau)');
       
+      if (!isMountedRef.current) return;
+      
       setData(arr);
       const now = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSyncTime(now);
@@ -236,10 +267,13 @@ export default function Recapitulatif() {
       
       Alert.alert('Import OK', `${arr.length} enregistrements depuis le serveur`);
     } catch (e: any) {
+      if (!isMountedRef.current) return;
       setLastError('IMPORT: ' + (e?.message || 'Erreur'));
       Alert.alert('Erreur import', e?.message || '');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -252,15 +286,24 @@ export default function Recapitulatif() {
         headers: API_HEADERS,
         body: JSON.stringify({ data: arr })
       });
+      
+      if (!isMountedRef.current) return;
+      
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const out = await r.json();
       if (!out.ok) throw new Error(out.error || 'Erreur serveur');
+      
+      if (!isMountedRef.current) return;
+      
       Alert.alert('Téléversement OK', `${out.count} enregistrements`);
     } catch (e: any) {
+      if (!isMountedRef.current) return;
       setLastError('UPLOAD: ' + (e?.message || 'Erreur'));
       Alert.alert('Erreur upload', e?.message || '');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -284,6 +327,7 @@ export default function Recapitulatif() {
         throw new Error(`Serveur: HTTP ${r.status} — ${body.slice(0, 120)}`);
       }
     } catch (e: any) {
+      if (!isMountedRef.current) return;
       // Rollback : remettre l'élève dans la liste
       if (removed) setData(prevData => [...prevData, removed as Eleve]);
       setDeleteError(e?.message || 'Erreur inconnue');
@@ -293,7 +337,6 @@ export default function Recapitulatif() {
   // ---- copier lien fiche web
   // Fonction copyLink retirée
 
-  // ---- export CSV
   // ---- export Excel (XLSX)
   const exportToExcel = async () => {
     try {
@@ -339,6 +382,8 @@ export default function Recapitulatif() {
       
       console.log('DEBUG: fichier généré, fileName =', fileName);
 
+      if (!isMountedRef.current) return;
+
       // Sur le web : créer un lien de téléchargement
       if (Platform.OS === 'web') {
         const binaryString = atob(wbout);
@@ -359,7 +404,9 @@ export default function Recapitulatif() {
         URL.revokeObjectURL(url);
         
         console.log('📊 Excel téléchargé:', data.length, 'élèves');
-        Alert.alert('Export Excel', `${data.length} élèves exportés en Excel`);
+        if (isMountedRef.current) {
+          Alert.alert('Export Excel', `${data.length} élèves exportés en Excel`);
+        }
       } else {
         // Sur mobile : utiliser le FileSystem et Sharing
         const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || '';
@@ -376,6 +423,8 @@ export default function Recapitulatif() {
 
         console.log('DEBUG: fichier sauvegardé');
 
+        if (!isMountedRef.current) return;
+
         // Partager le fichier
         const isAvailable = await Sharing.isAvailableAsync();
         console.log('DEBUG: Sharing disponible?', isAvailable);
@@ -386,12 +435,15 @@ export default function Recapitulatif() {
             dialogTitle: 'Exporter les élèves en Excel'
           });
         } else {
-          Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
+          if (isMountedRef.current) {
+            Alert.alert('Export Excel', `Fichier sauvegardé: ${fileName}`);
+          }
         }
 
         console.log('📊 Excel exporté:', data.length, 'élèves');
       }
     } catch (error: any) {
+      if (!isMountedRef.current) return;
       console.error('💥 Erreur export Excel:', error);
       console.error('Stack:', error?.stack);
       Alert.alert('Erreur', `Impossible d'exporter: ${error?.message || 'Erreur inconnue'}`);
@@ -425,7 +477,12 @@ export default function Recapitulatif() {
   // Charger au focus (couvre le montage initial ET le retour sur la page)
   useFocusEffect(
     useCallback(() => {
+      isMountedRef.current = true;
       loadElevesFromServer();
+      
+      return () => {
+        isMountedRef.current = false;
+      };
     }, [])
   );
 
@@ -439,10 +496,15 @@ export default function Recapitulatif() {
         headers: API_HEADERS
       });
       
+      if (!isMountedRef.current) return;
+      
       console.log('📡 Réponse status:', r.status);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       
       let arrRaw: any = await r.json();
+      
+      if (!isMountedRef.current) return;
+      
       console.log('Server response loadElevesFromServer type:', typeof arrRaw, Object.keys(arrRaw || {}));
       
       let arr: Eleve[] = [];
@@ -455,17 +517,23 @@ export default function Recapitulatif() {
       }
       if (!Array.isArray(arr)) throw new Error('JSON inattendu');
 
+      if (!isMountedRef.current) return;
+      
       console.log('✅ Chargé:', arr.length, 'élèves');
       setData(arr);
       const now = new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSyncTime(now);
     } catch (error: any) {
+      if (!isMountedRef.current) return;
+      
       console.error('❌ Erreur chargement:', error);
       setData([]);
       setLastError(error?.message || 'Erreur');
       Alert.alert('Erreur', `Impossible de charger les élèves: ${error?.message || 'Erreur inconnue'}`);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
