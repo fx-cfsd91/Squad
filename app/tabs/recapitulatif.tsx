@@ -21,7 +21,7 @@ import {
 import QRCode from 'react-native-qrcode-svg';
 import * as XLSX from 'xlsx';
 import HeaderBar from '../../components/header-bar';
-import { API_CONFIG, API_HEADERS, STORAGE_KEYS } from '../../constants/config';
+import { API_CONFIG, API_HEADERS, STORAGE_KEYS, BELT_COLORS } from '../../constants/config';
 import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
@@ -634,13 +634,26 @@ export default function Recapitulatif() {
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {item.photo ? (
-                  <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={[s.photo, { width: photoSize, height: photoSize }]} />
-                ) : (
-                  <View style={[s.photo, { width: photoSize, height: photoSize, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}>
-                    <Ionicons name="person" size={24} color="#777" />
-                  </View>
-                )}
+                <View>
+                  {item.photo ? (
+                    <Image source={{ uri: item.photo.startsWith('data:image') ? item.photo : `data:image/jpeg;base64,${item.photo}` }} style={[s.photo, { width: photoSize, height: photoSize }]} />
+                  ) : (
+                    <View style={[s.photo, { width: photoSize, height: photoSize, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333' }]}>
+                      <Ionicons name="person" size={24} color="#777" />
+                    </View>
+                  )}
+                  {item.ceinture ? (
+                    <View style={{
+                      height: 6,
+                      backgroundColor: BELT_COLORS[item.ceinture] ?? '#555',
+                      borderRadius: 3,
+                      marginTop: 4,
+                      width: photoSize,
+                      borderWidth: item.ceinture === 'Blanche' ? 1 : 0,
+                      borderColor: '#444',
+                    }} />
+                  ) : null}
+                </View>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.name, s.fullWidth, Platform.OS === 'web' ? ({ whiteSpace: 'normal' } as any) : undefined]}>{item.prenom} {item.nom}</Text>
