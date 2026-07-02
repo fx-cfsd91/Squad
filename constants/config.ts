@@ -107,7 +107,7 @@ export const BELT_COLORS: { [key: string]: string } = {
   'Noire III': '#1f2937',
   'Noire IV': '#1f2937',
   'Noire V': '#1f2937',
-  'Noire VI': '#1f2937',
+  'Blanc Rouge': '#ef4444',
 };
 
 export const BELT_OPTIONS = [
@@ -115,7 +115,7 @@ export const BELT_OPTIONS = [
   'Jaune', 'Jaune I', 'Jaune II', 'Jaune III',
   'Orange', 'Orange I', 'Orange II', 'Orange III',
   'Verte', 'Bleue', 'Violette', 'Marron',
-  'Noire', 'Noire I', 'Noire II', 'Noire III', 'Noire IV', 'Noire V', 'Noire VI',
+  'Noire', 'Noire I', 'Noire II', 'Noire III', 'Noire IV', 'Noire V', 'Blanc Rouge',
 ] as const;
 
 const BELT_ALIASES: Record<string, string> = {
@@ -135,7 +135,8 @@ const BELT_ALIASES: Record<string, string> = {
   noireiii: 'Noire III',
   noireiv: 'Noire IV',
   noirev: 'Noire V',
-  noirevi: 'Noire VI',
+  noirevi: 'Blanc Rouge',
+  blancrouge: 'Blanc Rouge',
 };
 
 export const normalizeBeltLevel = (belt?: string | null) => {

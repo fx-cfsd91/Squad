@@ -10,7 +10,7 @@ import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import HeaderBar, { HEADER_HEIGHT } from '../../components/header-bar';
-import { API_CONFIG, API_HEADERS } from '../../constants/config';
+import { API_CONFIG, API_HEADERS, BELT_OPTIONS } from '../../constants/config';
 import { Eleve } from '../../constants/types';
 import { generateUUID } from '../../lib/utils';
 
@@ -36,12 +36,7 @@ export default function Adhesion() {
           const isStrongPassword = (pwd:string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
         // Normalise une chaîne (supprime les accents)
         const normalizeString = (str:string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const ceintures = [
-        'Blanche','Jaune', 'Jaune I', 'Jaune II', 'Jaune III',
-        'Orange','Orange I', 'Orange II', 'Orange III',
-        'Verte', 'Bleue', 'Violette', 'Marron',
-        'Noire I', 'Noire II', 'Noire III', 'Noire IV', 'Noire V', 'Noire VI'
-      ];
+      const ceintures = BELT_OPTIONS;
     // Suppression de la logique selfie/caméra
   // champs
   const [nom,setNom]=useState(''); const [prenom,setPrenom]=useState('');
