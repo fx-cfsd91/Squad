@@ -110,6 +110,53 @@ export const BELT_COLORS: { [key: string]: string } = {
   'Noire VI': '#1f2937',
 };
 
+export const BELT_OPTIONS = [
+  'Blanche',
+  'Jaune', 'Jaune I', 'Jaune II', 'Jaune III',
+  'Orange', 'Orange I', 'Orange II', 'Orange III',
+  'Verte', 'Bleue', 'Violette', 'Marron',
+  'Noire', 'Noire I', 'Noire II', 'Noire III', 'Noire IV', 'Noire V', 'Noire VI',
+] as const;
+
+const BELT_ALIASES: Record<string, string> = {
+  yellow: 'Jaune',
+  blanche: 'Blanche',
+  white: 'Blanche',
+  jaune: 'Jaune',
+  orange: 'Orange',
+  verte: 'Verte',
+  vertee: 'Verte',
+  bleue: 'Bleue',
+  violette: 'Violette',
+  marron: 'Marron',
+  noire: 'Noire',
+  noirei: 'Noire I',
+  noireii: 'Noire II',
+  noireiii: 'Noire III',
+  noireiv: 'Noire IV',
+  noirev: 'Noire V',
+  noirevi: 'Noire VI',
+};
+
+export const normalizeBeltLevel = (belt?: string | null) => {
+  const value = String(belt ?? '').trim();
+  if (!value) return '';
+
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+  const aliasKey = normalized.replace(/\s+/g, '');
+  return BELT_ALIASES[aliasKey] ?? value;
+};
+
+export const getBeltColor = (belt?: string | null) => {
+  const normalized = normalizeBeltLevel(belt);
+  return BELT_COLORS[normalized] ?? '#555';
+};
+
 // Event Type Colors
 export const EVENT_TYPE_COLORS: { [key: string]: string } = {
   'competition': '#ef4444',

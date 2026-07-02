@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import HeaderBar from '../../../components/header-bar';
-import { API_CONFIG, API_HEADERS } from '../../../constants/config';
+import { API_CONFIG, API_HEADERS, BELT_OPTIONS, normalizeBeltLevel } from '../../../constants/config';
 import { Eleve } from '../../../constants/types';
 import { fetchEleves } from '../../../lib/api';
 
@@ -64,6 +65,7 @@ export default function FicheEleve() {
 					email: found.email || '',
 					adresse: found.adresse || '',
 					licence: found.licence || '',
+					ceinture: normalizeBeltLevel(found.ceinture),
 					password: found.password || '',
 				});
 			} catch (e: any) {
@@ -127,6 +129,7 @@ export default function FicheEleve() {
 				email: editData.email,
 				adresse: editData.adresse,
 				licence: editData.licence,
+				ceinture: normalizeBeltLevel(editData.ceinture),
 			};
 
 			// Inclure le mot de passe s'il a été modifié
@@ -147,6 +150,7 @@ export default function FicheEleve() {
 			}
 
 			const updated = { ...eleve, ...editData };
+			updated.ceinture = normalizeBeltLevel(editData.ceinture);
 			setEleve(updated);
 
 			const currentEleveData = await AsyncStorage.getItem('cfsd91_eleve_data');
@@ -160,6 +164,7 @@ export default function FicheEleve() {
 						nom: updated.nom,
 						prenom: updated.prenom,
 						discipline: updated.discipline,
+						ceinture: updated.ceinture,
 						email: updated.email,
 						licence: updated.licence,
 					};
@@ -272,6 +277,21 @@ export default function FicheEleve() {
 							placeholder="Numéro de licence"
 							placeholderTextColor="#666"
 						/>
+
+						<Text style={{ color: '#fff', fontWeight: '600', marginBottom: 4 }}>Ceinture</Text>
+						<View style={{ backgroundColor: '#111', borderWidth: 1, borderColor: '#333', borderRadius: 6, marginBottom: 12, overflow: 'hidden' }}>
+							<Picker
+								selectedValue={editData.ceinture || ''}
+								onValueChange={(value) => setEditData({ ...editData, ceinture: value })}
+								dropdownIconColor="#fff"
+								style={{ color: '#fff' }}
+							>
+								<Picker.Item label="— choisir —" value="" />
+								{BELT_OPTIONS.map((belt) => (
+									<Picker.Item key={belt} label={belt} value={belt} />
+								))}
+							</Picker>
+						</View>
 					<Text style={{ color: '#fff', fontWeight: '600', marginTop: 16, marginBottom: 4 }}>Mot de passe (optionnel)</Text>
 					<TextInput
 						style={s.input}
@@ -324,7 +344,7 @@ export default function FicheEleve() {
 							</View>
 							<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
 								<Ionicons name="ribbon" size={18} color="#aaa" style={{ marginRight: 8 }} />
-								<Text style={s.mutedSmall}>Ceinture : {eleve.ceinture || '—'}</Text>
+								<Text style={s.mutedSmall}>Ceinture : {normalizeBeltLevel(eleve.ceinture) || '—'}</Text>
 							</View>
 							<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
 								<Ionicons name="call" size={18} color="#aaa" style={{ marginRight: 8 }} />
