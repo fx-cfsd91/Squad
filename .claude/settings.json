@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git rm *)",
+      "Bash(npm audit *)",
+      "PowerShell(-join \\(\\(65..90\\) + \\(97..122\\) + \\(48..57\\) | Get-Random -Count 64 | % {[char]$_}\\))",
+      "Bash(git commit *)"
     ]
   }
 }

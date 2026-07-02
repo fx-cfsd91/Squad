@@ -86,17 +86,28 @@ export const DISCIPLINE_COLORS: { [key: string]: string } = {
   'Karaté': '#8b5cf6',
 };
 
-// Belt Colors
+// Belt Colors — toutes les variantes de grade correspondant aux valeurs stockées
 export const BELT_COLORS: { [key: string]: string } = {
   'Blanche': '#e5e7eb',
   'Jaune': '#fbbf24',
+  'Jaune I': '#fbbf24',
+  'Jaune II': '#fbbf24',
+  'Jaune III': '#fbbf24',
   'Orange': '#f97316',
+  'Orange I': '#f97316',
+  'Orange II': '#f97316',
+  'Orange III': '#f97316',
   'Verte': '#10b981',
   'Bleue': '#3b82f6',
-  'Marron': '#92400e',
   'Violette': '#a855f7',
+  'Marron': '#92400e',
   'Noire': '#1f2937',
-  'Yellow': '#fbbf24',
+  'Noire I': '#1f2937',
+  'Noire II': '#1f2937',
+  'Noire III': '#1f2937',
+  'Noire IV': '#1f2937',
+  'Noire V': '#1f2937',
+  'Noire VI': '#1f2937',
 };
 
 // Event Type Colors
