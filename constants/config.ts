@@ -32,10 +32,11 @@ export const API_CONFIG = {
   EVALUATIONS_URL: 'https://cfsd91.com/appli',
 };
 
-// API Headers
+// API Headers — la clé doit être définie via EXPO_PUBLIC_API_KEY dans Vercel
+// (Settings → Environment Variables, jamais dans le code source)
 export const API_HEADERS = {
   'Content-Type': 'application/json',
-  'X-API-KEY': 'a7f8d9e2b3c4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e',
+  'X-API-KEY': process.env.EXPO_PUBLIC_API_KEY ?? '',
 };
 
 // Storage Keys

@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updated = false;
                 foreach ($eleves as &$e) {
                     if (($e['id'] ?? '') === $eleveId) {
-                        $e['password'] = $newPassword;
+                        $e['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
                         $updated = true;
                         break;
                     }

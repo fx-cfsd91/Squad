@@ -65,9 +65,24 @@ if (!isset($eleve['password'])) {
     exit;
 }
 $storedPwd = $eleve['password'];
-$passwordOk = (strlen($storedPwd) >= 60 && str_starts_with($storedPwd, '$2'))
-    ? password_verify($password, $storedPwd)
-    : ($storedPwd === $password);
+$isHashed = strlen($storedPwd) >= 60 && str_starts_with($storedPwd, '$2');
+if ($isHashed) {
+    $passwordOk = password_verify($password, $storedPwd);
+} else {
+    // Mot de passe en clair (legacy) — on vérifie puis on migre vers bcrypt
+    $passwordOk = ($storedPwd === $password);
+    if ($passwordOk) {
+        $elevesData = json_decode(file_get_contents($elevesFile), true);
+        foreach ($elevesData as &$row) {
+            if (($row['id'] ?? '') === $eleve['id']) {
+                $row['password'] = password_hash($password, PASSWORD_DEFAULT);
+                break;
+            }
+        }
+        unset($row);
+        @file_put_contents($elevesFile, json_encode($elevesData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+}
 
 if (!$passwordOk) {
     http_response_code(401);
