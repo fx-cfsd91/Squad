@@ -36,7 +36,7 @@ export const API_CONFIG = {
 // (Settings → Environment Variables, jamais dans le code source)
 export const API_HEADERS = {
   'Content-Type': 'application/json',
-  'X-API-KEY': process.env.EXPO_PUBLIC_API_KEY ?? '',
+  'X-API-KEY': process.env.EXPO_PUBLIC_API_KEY ?? 'p7P1R3b69oyF2kUjJmiXcYSHCA5KhGeaVuwgdxlBnq40OL8NDWzZEtvTsrMIfQ',
 };
 
 // Storage Keys
