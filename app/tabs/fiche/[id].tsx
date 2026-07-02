@@ -90,20 +90,19 @@ export default function FicheEleve() {
 				mediaTypes: ImagePicker.MediaTypeOptions.Images,
 				quality: 0.6,
 				base64: Platform.OS === 'web',
-						if (!isMountedRef.current) return;
-
 			});
+			if (!isMountedRef.current) return;
 			const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
 			if (Platform.OS === 'web') {
 				const base64 = (res as any).assets ? (res as any).assets[0]?.base64 : (res as any).base64;
 				if (base64) setEditData({ ...editData, photo: base64 });
 			} else if (uri) {
 				const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
-								if (!isMountedRef.current) return;
+				if (!isMountedRef.current) return;
 				setEditData({ ...editData, photo: base64 });
 			}
 		} catch (e) {
-						if (!isMountedRef.current) return;
+			if (!isMountedRef.current) return;
 			console.error('Error picking photo:', e);
 			Alert.alert('Erreur', 'Impossible de sélectionner la photo.');
 		}
@@ -139,9 +138,9 @@ export default function FicheEleve() {
 				method: 'PUT',
 				headers: API_HEADERS,
 				body: JSON.stringify(updateData),
-
-						if (!isMountedRef.current) return;
 			});
+
+			if (!isMountedRef.current) return;
 
 			if (!response.ok) {
 				throw new Error(`Erreur serveur: ${response.status}`);
@@ -151,7 +150,7 @@ export default function FicheEleve() {
 			setEleve(updated);
 
 			const currentEleveData = await AsyncStorage.getItem('cfsd91_eleve_data');
-						if (!isMountedRef.current) return;
+			if (!isMountedRef.current) return;
 
 			if (currentEleveData) {
 				const current = JSON.parse(currentEleveData);
@@ -165,13 +164,11 @@ export default function FicheEleve() {
 						licence: updated.licence,
 					};
 					await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(updatedLight));
-									if (!isMountedRef.current) return;
 				}
 			}
 
 			setIsEditing(false);
 			router.back();
-					if (!isMountedRef.current) return;
 		} catch (e: any) {
 			console.error('Save error:', e);
 			Alert.alert('Erreur', e?.message || 'Impossible de mettre à jour le profil.');
