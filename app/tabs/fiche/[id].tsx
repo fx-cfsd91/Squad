@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import HeaderBar from '../../../components/header-bar';
-import { API_CONFIG, API_HEADERS, BELT_OPTIONS, getBeltColor, normalizeBeltLevel } from '../../../constants/config';
+import { API_CONFIG, API_HEADERS, BELT_OPTIONS, getBeltColor, getBeltSplitColors, normalizeBeltLevel } from '../../../constants/config';
 import { Eleve } from '../../../constants/types';
 import { fetchEleves } from '../../../lib/api';
 
@@ -39,7 +39,9 @@ export default function FicheEleve() {
 	const isMountedRef = React.useRef(true);
 
 	const isStrongPassword = (pwd: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
+	const isSplitBelt = (belt?: string) => Boolean(getBeltSplitColors(belt));
 	const getBeltTextColor = (belt?: string) => {
+		if (isSplitBelt(belt)) return '#111';
 		const color = getBeltColor(belt);
 		const hex = color.replace('#', '');
 		const fullHex = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
@@ -296,7 +298,9 @@ export default function FicheEleve() {
 								{BELT_OPTIONS.map((belt) => {
 									const selected = normalizeBeltLevel(editData.ceinture) === belt;
 									const backgroundColor = getBeltColor(belt);
+									const splitColors = getBeltSplitColors(belt);
 									const textColor = getBeltTextColor(belt);
+									const splitBelt = Boolean(splitColors);
 									return (
 										<TouchableOpacity
 											key={belt}
@@ -307,16 +311,25 @@ export default function FicheEleve() {
 												paddingVertical: 12,
 												paddingHorizontal: 10,
 												borderRadius: 10,
-												backgroundColor,
+												backgroundColor: splitBelt ? 'transparent' : backgroundColor,
 												borderWidth: selected ? 3 : 1,
 												borderColor: selected ? '#fff' : 'rgba(255,255,255,0.18)',
 												flexDirection: 'row',
 												alignItems: 'center',
 												justifyContent: 'space-between',
+												overflow: 'hidden',
 											}}
 										>
-											<Text style={{ color: textColor, fontWeight: '700', fontSize: 13 }}>{belt}</Text>
-											{selected && <Ionicons name="checkmark-circle" size={18} color={textColor} />}
+											{splitBelt && (
+												<View style={{ position: 'absolute', inset: 0, flexDirection: 'row' }}>
+													<View style={{ flex: 1, backgroundColor: splitColors?.[0] }} />
+													<View style={{ flex: 1, backgroundColor: splitColors?.[1] }} />
+												</View>
+											)}
+											<View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+												<Text style={{ color: textColor, fontWeight: '700', fontSize: 13 }}>{belt}</Text>
+												{selected && <Ionicons name="checkmark-circle" size={18} color={textColor} />}
+											</View>
 										</TouchableOpacity>
 									);
 								})}

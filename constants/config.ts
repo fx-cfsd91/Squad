@@ -89,14 +89,17 @@ export const DISCIPLINE_COLORS: { [key: string]: string } = {
 // Belt Colors — toutes les variantes de grade correspondant aux valeurs stockées
 export const BELT_COLORS: { [key: string]: string } = {
   'Blanche': '#e5e7eb',
+  'Blanc Jaune': '#fbbf24',
   'Jaune': '#fbbf24',
   'Jaune I': '#fbbf24',
   'Jaune II': '#fbbf24',
   'Jaune III': '#fbbf24',
+  'Jaune Orange': '#f97316',
   'Orange': '#f97316',
   'Orange I': '#f97316',
   'Orange II': '#f97316',
   'Orange III': '#f97316',
+  'Orange Vert': '#10b981',
   'Verte': '#10b981',
   'Bleue': '#3b82f6',
   'Violette': '#a855f7',
@@ -112,18 +115,31 @@ export const BELT_COLORS: { [key: string]: string } = {
 
 export const BELT_OPTIONS = [
   'Blanche',
+  'Blanc Jaune',
   'Jaune', 'Jaune I', 'Jaune II', 'Jaune III',
+  'Jaune Orange',
   'Orange', 'Orange I', 'Orange II', 'Orange III',
+  'Orange Vert',
   'Verte', 'Bleue', 'Violette', 'Marron',
   'Noire', 'Noire I', 'Noire II', 'Noire III', 'Noire IV', 'Noire V', 'Blanc Rouge',
 ] as const;
 
+export const BELT_SPLIT_COLORS: Record<string, [string, string]> = {
+	'Blanc Jaune': ['#f8fafc', '#fbbf24'],
+	'Jaune Orange': ['#fbbf24', '#f97316'],
+	'Orange Vert': ['#f97316', '#10b981'],
+	'Blanc Rouge': ['#f8fafc', '#dc2626'],
+};
+
 const BELT_ALIASES: Record<string, string> = {
   yellow: 'Jaune',
+  blancjaune: 'Blanc Jaune',
   blanche: 'Blanche',
   white: 'Blanche',
   jaune: 'Jaune',
+  jauneorange: 'Jaune Orange',
   orange: 'Orange',
+  orangevert: 'Orange Vert',
   verte: 'Verte',
   vertee: 'Verte',
   bleue: 'Bleue',
@@ -156,6 +172,11 @@ export const normalizeBeltLevel = (belt?: string | null) => {
 export const getBeltColor = (belt?: string | null) => {
   const normalized = normalizeBeltLevel(belt);
   return BELT_COLORS[normalized] ?? '#555';
+};
+
+export const getBeltSplitColors = (belt?: string | null) => {
+	const normalized = normalizeBeltLevel(belt);
+	return BELT_SPLIT_COLORS[normalized] ?? null;
 };
 
 // Event Type Colors

@@ -21,7 +21,7 @@ import {
 import QRCode from 'react-native-qrcode-svg';
 import * as XLSX from 'xlsx';
 import HeaderBar from '../../components/header-bar';
-import { API_CONFIG, API_HEADERS, STORAGE_KEYS, getBeltColor, normalizeBeltLevel } from '../../constants/config';
+import { API_CONFIG, API_HEADERS, STORAGE_KEYS, getBeltColor, getBeltSplitColors, normalizeBeltLevel } from '../../constants/config';
 import { fetchEleves } from '../../lib/api';
 
 const REMOTE_JSON_URL = API_CONFIG.ELEVES_FETCH_URL;
@@ -706,15 +706,29 @@ export default function Recapitulatif() {
                     </View>
                   )}
                   {item.ceinture ? (
+                    (() => {
+                      const splitColors = getBeltSplitColors(item.ceinture);
+                      return (
                     <View style={{
                       height: 6,
-                      backgroundColor: getBeltColor(item.ceinture),
                       borderRadius: 3,
                       marginTop: 4,
                       width: photoSize,
                       borderWidth: normalizeBeltLevel(item.ceinture) === 'Blanche' ? 1 : 0,
                       borderColor: '#444',
-                    }} />
+                      overflow: 'hidden',
+                      backgroundColor: splitColors ? 'transparent' : getBeltColor(item.ceinture),
+                      flexDirection: 'row',
+                    }}>
+                      {splitColors && (
+                        <>
+                          <View style={{ flex: 1, backgroundColor: splitColors[0] }} />
+                          <View style={{ flex: 1, backgroundColor: splitColors[1] }} />
+                        </>
+                      )}
+                    </View>
+                      );
+                    })()
                   ) : null}
                 </View>
               </View>
