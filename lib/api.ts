@@ -15,8 +15,6 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}) => {
 
   try {
     const finalHeaders = { ...API_HEADERS, ...options.headers };
-    console.log('🔑 API_HEADERS sent:', finalHeaders);
-    
     const response = await fetch(url, {
       ...options,
       method: options.method || 'GET',
@@ -186,15 +184,12 @@ export const updateEvent = async (eventId: string, updates: Partial<Event>): Pro
  */
 export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
-    console.log('🗑️  Attempting to delete event:', eventId);
     const response = await fetchWithTimeout(API_CONFIG.EVENTS_URL, {
       method: 'DELETE',
       body: JSON.stringify({ id: eventId }),
     });
 
-    console.log('📡 Delete response status:', response.status);
     const data = await response.json();
-    console.log('✅ Delete response data:', data);
     
     if (!data.success) {
       throw new Error(data.message || 'Failed to delete event');

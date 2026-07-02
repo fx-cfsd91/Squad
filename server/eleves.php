@@ -75,21 +75,35 @@ switch ($method) {
 
         // --- Suppression via POST (évite les problèmes avec la méthode DELETE) ---
         if (isset($input['action']) && $input['action'] === 'delete') {
-            if (!isset($input['id'])) {
+            if (!isset($input['id']) || !isset($input['password'])) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Bad Request', 'message' => 'Missing eleve ID']);
+                echo json_encode(['error' => 'Bad Request', 'message' => 'Missing required fields']);
                 exit;
             }
             $eleves = readEleves($elevesFile);
-            $initialCount = count($eleves);
-            $eleves = array_values(array_filter($eleves, function($e) use ($input) {
-                return $e['id'] !== $input['id'];
-            }));
-            if (count($eleves) === $initialCount) {
+            $target = null;
+            foreach ($eleves as $e) {
+                if ($e['id'] === $input['id']) { $target = $e; break; }
+            }
+            if (!$target) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Not Found', 'message' => 'Eleve not found']);
                 exit;
             }
+            // Vérifier le mot de passe avant suppression
+            $pwdOk = isset($target['password']) && (
+                password_verify($input['password'], $target['password']) ||
+                $target['password'] === $input['password']
+            );
+            if (!$pwdOk) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Forbidden', 'message' => 'Invalid password']);
+                exit;
+            }
+            $initialCount = count($eleves);
+            $eleves = array_values(array_filter($eleves, function($e) use ($input) {
+                return $e['id'] !== $input['id'];
+            }));
             saveEleves($elevesFile, $eleves);
             echo json_encode(['success' => true, 'message' => 'Eleve deleted']);
             exit;
@@ -144,7 +158,7 @@ switch ($method) {
                 'licence' => $eleve['licence'] ?? '',
                 'ceinture' => $eleve['ceinture'] ?? '',
                 'photo' => $eleve['photo'] ?? '', // base64 ou vide
-                'password' => $eleve['password'],
+                'password' => password_hash($eleve['password'], PASSWORD_DEFAULT),
                 'createdAt' => $eleve['createdAt'] ?? date('Y-m-d H:i:s')
             ];
             $eleves[] = $newEleve;
@@ -174,7 +188,7 @@ switch ($method) {
         if (!file_exists($elevesFile)) {
             http_response_code(500);
             logApiAccess($method, $CURRENT_API_KEY, 500, "File not found: $elevesFile");
-            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves file not found', 'path' => $elevesFile, 'exists' => file_exists($elevesFile)]);
+            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves file not found']);
             exit;
         }
         
@@ -182,7 +196,7 @@ switch ($method) {
         if (empty($eleves)) {
             http_response_code(500);
             logApiAccess($method, $CURRENT_API_KEY, 500, "Eleves data is empty from: $elevesFile");
-            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves data is empty', 'path' => $elevesFile]);
+            echo json_encode(['error' => 'Server Error', 'message' => 'Eleves data is empty']);
             exit;
         }
         
@@ -193,7 +207,7 @@ switch ($method) {
                 $eleveFound = true;
                 
                 // Mettre à jour les champs fournis
-                $updatableFields = ['nom', 'prenom', 'naissance', 'jour', 'discipline', 'combattant', 'etudiant', 'renouvellement', 'telUrgence', 'telEleve', 'email', 'adresse', 'poids', 'licence', 'ceinture', 'photo', 'password'];
+                $updatableFields = ['nom', 'prenom', 'naissance', 'jour', 'discipline', 'combattant', 'etudiant', 'renouvellement', 'telUrgence', 'telEleve', 'email', 'adresse', 'poids', 'licence', 'ceinture', 'photo'];
                 
                 foreach ($updatableFields as $field) {
                     if (isset($input[$field])) {
@@ -217,7 +231,7 @@ switch ($method) {
         if (!saveEleves($elevesFile, $eleves)) {
             http_response_code(500);
             logApiAccess($method, $CURRENT_API_KEY, 500, "Failed to save eleves to: $elevesFile");
-            echo json_encode(['error' => 'Server Error', 'message' => 'Failed to save changes', 'path' => $elevesFile]);
+            echo json_encode(['error' => 'Server Error', 'message' => 'Failed to save changes']);
             exit;
         }
         
