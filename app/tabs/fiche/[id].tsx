@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import HeaderBar from '../../../components/header-bar';
-import { API_CONFIG, API_HEADERS, BELT_OPTIONS, normalizeBeltLevel } from '../../../constants/config';
+import { API_CONFIG, API_HEADERS, BELT_OPTIONS, getBeltColor, normalizeBeltLevel } from '../../../constants/config';
 import { Eleve } from '../../../constants/types';
 import { fetchEleves } from '../../../lib/api';
 
@@ -40,6 +39,16 @@ export default function FicheEleve() {
 	const isMountedRef = React.useRef(true);
 
 	const isStrongPassword = (pwd: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
+	const getBeltTextColor = (belt?: string) => {
+		const color = getBeltColor(belt);
+		const hex = color.replace('#', '');
+		const fullHex = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+		const r = parseInt(fullHex.slice(0, 2), 16);
+		const g = parseInt(fullHex.slice(2, 4), 16);
+		const b = parseInt(fullHex.slice(4, 6), 16);
+		const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+		return luminance > 150 ? '#111' : '#fff';
+	};
 
 	// Cleanup quand le composant est démonté
 	React.useEffect(() => {
@@ -279,18 +288,39 @@ export default function FicheEleve() {
 						/>
 
 						<Text style={{ color: '#fff', fontWeight: '600', marginBottom: 4 }}>Ceinture</Text>
-						<View style={{ backgroundColor: '#111', borderWidth: 1, borderColor: '#333', borderRadius: 6, marginBottom: 12, overflow: 'hidden' }}>
-							<Picker
-								selectedValue={editData.ceinture || ''}
-								onValueChange={(value) => setEditData({ ...editData, ceinture: value })}
-								dropdownIconColor="#fff"
-								style={{ color: '#fff' }}
-							>
-								<Picker.Item label="— choisir —" value="" />
-								{BELT_OPTIONS.map((belt) => (
-									<Picker.Item key={belt} label={belt} value={belt} />
-								))}
-							</Picker>
+						<View style={{ marginBottom: 12 }}>
+							<Text style={{ color: '#9ca3af', fontSize: 12, marginBottom: 8 }}>
+								{editData.ceinture ? `Sélection actuelle : ${normalizeBeltLevel(editData.ceinture)}` : 'Choisis une ceinture dans les cases colorées ci-dessous'}
+							</Text>
+							<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+								{BELT_OPTIONS.map((belt) => {
+									const selected = normalizeBeltLevel(editData.ceinture) === belt;
+									const backgroundColor = getBeltColor(belt);
+									const textColor = getBeltTextColor(belt);
+									return (
+										<TouchableOpacity
+											key={belt}
+											onPress={() => setEditData({ ...editData, ceinture: belt })}
+											style={{
+												width: '48%',
+												minWidth: 120,
+												paddingVertical: 12,
+												paddingHorizontal: 10,
+												borderRadius: 10,
+												backgroundColor,
+												borderWidth: selected ? 3 : 1,
+												borderColor: selected ? '#fff' : 'rgba(255,255,255,0.18)',
+												flexDirection: 'row',
+												alignItems: 'center',
+												justifyContent: 'space-between',
+											}}
+										>
+											<Text style={{ color: textColor, fontWeight: '700', fontSize: 13 }}>{belt}</Text>
+											{selected && <Ionicons name="checkmark-circle" size={18} color={textColor} />}
+										</TouchableOpacity>
+									);
+								})}
+							</View>
 						</View>
 					<Text style={{ color: '#fff', fontWeight: '600', marginTop: 16, marginBottom: 4 }}>Mot de passe (optionnel)</Text>
 					<TextInput
