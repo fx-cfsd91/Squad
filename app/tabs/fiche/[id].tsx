@@ -36,7 +36,16 @@ export default function FicheEleve() {
 	const [editData, setEditData] = useState<any>({});
 	const [isSaving, setIsSaving] = useState(false);
 
+	const isMountedRef = React.useRef(true);
+
 	const isStrongPassword = (pwd: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/.test(pwd);
+
+	// Cleanup quand le composant est démonté
+	React.useEffect(() => {
+		return () => {
+			isMountedRef.current = false;
+		};
+	}, []);
 
 	useEffect(() => {
 		const loadEleve = async () => {
@@ -46,6 +55,7 @@ export default function FicheEleve() {
 				const eleves = await fetchEleves();
 				const found = eleves.find(e => String(e.id) === String(id));
 				if (!found) throw new Error('Élève introuvable');
+				if (!isMountedRef.current) return;
 				setEleve(found);
 				setEditData({
 					photo: found.photo || '',
@@ -57,10 +67,13 @@ export default function FicheEleve() {
 					password: found.password || '',
 				});
 			} catch (e: any) {
+				if (!isMountedRef.current) return;
 				setError(e?.message || 'Erreur chargement fiche');
 				setEleve(null);
 			} finally {
-				setLoading(false);
+				if (isMountedRef.current) {
+					setLoading(false);
+				}
 			}
 		};
 		loadEleve();
@@ -77,6 +90,8 @@ export default function FicheEleve() {
 				mediaTypes: ImagePicker.MediaTypeOptions.Images,
 				quality: 0.6,
 				base64: Platform.OS === 'web',
+						if (!isMountedRef.current) return;
+
 			});
 			const uri = (res as any).assets ? (res as any).assets[0]?.uri : (res as any).uri;
 			if (Platform.OS === 'web') {
@@ -84,9 +99,11 @@ export default function FicheEleve() {
 				if (base64) setEditData({ ...editData, photo: base64 });
 			} else if (uri) {
 				const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+								if (!isMountedRef.current) return;
 				setEditData({ ...editData, photo: base64 });
 			}
 		} catch (e) {
+						if (!isMountedRef.current) return;
 			console.error('Error picking photo:', e);
 			Alert.alert('Erreur', 'Impossible de sélectionner la photo.');
 		}
@@ -122,6 +139,8 @@ export default function FicheEleve() {
 				method: 'PUT',
 				headers: API_HEADERS,
 				body: JSON.stringify(updateData),
+
+						if (!isMountedRef.current) return;
 			});
 
 			if (!response.ok) {
@@ -132,6 +151,8 @@ export default function FicheEleve() {
 			setEleve(updated);
 
 			const currentEleveData = await AsyncStorage.getItem('cfsd91_eleve_data');
+						if (!isMountedRef.current) return;
+
 			if (currentEleveData) {
 				const current = JSON.parse(currentEleveData);
 				if (String(current.id) === String(eleve.id)) {
@@ -144,16 +165,20 @@ export default function FicheEleve() {
 						licence: updated.licence,
 					};
 					await AsyncStorage.setItem('cfsd91_eleve_data', JSON.stringify(updatedLight));
+									if (!isMountedRef.current) return;
 				}
 			}
 
 			setIsEditing(false);
 			router.back();
+					if (!isMountedRef.current) return;
 		} catch (e: any) {
 			console.error('Save error:', e);
 			Alert.alert('Erreur', e?.message || 'Impossible de mettre à jour le profil.');
 		} finally {
-			setIsSaving(false);
+			if (isMountedRef.current) {
+				setIsSaving(false);
+			}
 		}
 	};
 
