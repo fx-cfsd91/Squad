@@ -2,9 +2,6 @@
 const UPSTREAM_URLS = [
   // Endpoint principal utilisé par l'app mobile
   'https://cfsd91.com/appli/php/identification.php',
-  // Fallback legacy (si infra ancienne)
-  'https://cfsd91.com/login.php',
-  'https://cfsd91.com/appli/php/login.php',
 ];
 
 function normalizeBody(body) {
@@ -40,6 +37,18 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
+  const apiKey =
+    process.env.API_KEY ||
+    process.env.EXPO_PUBLIC_API_KEY ||
+    '';
+
+  if (!apiKey) {
+    return res.status(500).json({
+      ok: false,
+      error: 'Configuration API manquante (API_KEY).',
+    });
+  }
+
   const payload = normalizeBody(req.body);
   let lastFailure = null;
   let lastAuthFailure = null;
@@ -51,7 +60,7 @@ module.exports = async function handler(req, res) {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          'X-API-KEY': process.env.API_KEY || '',
+          'X-API-KEY': apiKey,
         },
         body: JSON.stringify(payload),
       });
