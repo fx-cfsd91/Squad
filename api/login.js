@@ -1,5 +1,8 @@
-// Vercel serverless proxy - contourne le CORS pour login.php
+// Vercel serverless proxy - contourne le CORS pour l'authentification
 const UPSTREAM_URLS = [
+  // Endpoint principal utilisé par l'app mobile
+  'https://cfsd91.com/appli/php/identification.php',
+  // Fallback legacy (si infra ancienne)
   'https://cfsd91.com/login.php',
   'https://cfsd91.com/appli/php/login.php',
 ];
@@ -39,6 +42,7 @@ module.exports = async function handler(req, res) {
 
   const payload = normalizeBody(req.body);
   let lastFailure = null;
+  let lastAuthFailure = null;
 
   for (const url of UPSTREAM_URLS) {
     try {
@@ -68,10 +72,19 @@ module.exports = async function handler(req, res) {
           });
         }
 
-        return res.status(response.status).json({
-          ok: false,
+        // Continuer vers le prochain endpoint au lieu d'échouer immédiatement.
+        // Cela evite un faux negatif si une URL legacy renvoie 401 mais que
+        // l'endpoint principal accepte bien le mot de passe mis a jour.
+        lastAuthFailure = {
+          status: response.status,
           error: parsed.error || parsed.message || 'Authentification echouee',
-        });
+          details: {
+            url,
+            status: response.status,
+            snippet: shortSnippet(raw),
+          },
+        };
+        continue;
       }
 
       lastFailure = {
@@ -86,6 +99,14 @@ module.exports = async function handler(req, res) {
         snippet: String(error && error.message ? error.message : error),
       };
     }
+  }
+
+  if (lastAuthFailure) {
+    return res.status(lastAuthFailure.status || 401).json({
+      ok: false,
+      error: lastAuthFailure.error,
+      details: lastAuthFailure.details,
+    });
   }
 
   return res.status(502).json({
