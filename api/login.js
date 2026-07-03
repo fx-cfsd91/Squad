@@ -1,6 +1,8 @@
 // Vercel serverless proxy - contourne le CORS pour l'authentification
 const UPSTREAM_URLS = [
-  // Endpoint principal utilisé par l'app mobile
+  // Endpoint principal actuellement actif en production
+  'https://cfsd91.com/login.php',
+  // Endpoint applique (si le backend est migre)
   'https://cfsd91.com/appli/php/identification.php',
 ];
 

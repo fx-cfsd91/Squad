@@ -12,3 +12,8 @@ coverage
 .cache
 android
 ios
+Backups
+build-apk
+*.zip
+*.apk
+*.aab
