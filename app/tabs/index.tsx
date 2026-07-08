@@ -10,7 +10,6 @@ import {
   Dimensions,
   Image,
   ImageBackground,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -319,6 +318,10 @@ export default function Home() {
     // Alert.alert('Déconnexion', 'Vous êtes maintenant déconnecté(e)');
   };
 
+  const openPlanDeJeu = async () => {
+    router.push('/tabs/plan-de-jeu');
+  };
+
   const { width, height } = Dimensions.get('window');
   return (
     <ScrollView
@@ -386,6 +389,15 @@ export default function Home() {
             </Pressable>
           )}
         </View>
+
+        <Pressable style={s.learnMoreBanner} onPress={openPlanDeJeu}>
+          <View style={s.learnMoreDot} />
+          <View style={s.learnMoreTextWrap}>
+            <Text style={s.learnMoreTitle}>Apprends moi</Text>
+            <Text style={s.learnMoreSubtitle}>Plan de jeu CFSD91 light</Text>
+          </View>
+          <Ionicons name="open-outline" size={16} color="#e5e7eb" />
+        </Pressable>
 
         {/* --- Carte de bienvenue élève avec photo --- */}
         {identifie && eleveData && (
@@ -886,6 +898,38 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.5,
+  },
+  learnMoreBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 12,
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  learnMoreDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#22c55e',
+  },
+  learnMoreTextWrap: {
+    flex: 1,
+  },
+  learnMoreTitle: {
+    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  learnMoreSubtitle: {
+    color: '#94a3b8',
+    fontSize: 11,
+    marginTop: 1,
   },
   logo: { width: 120, height: 40 },
   logoPlaceholder: { width: 0, height: 40 },
