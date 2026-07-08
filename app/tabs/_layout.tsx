@@ -13,7 +13,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="events" options={{ title: 'Événements' }} />
       <Tabs.Screen name="Presence" options={{ title: 'Présence' }} />
       <Tabs.Screen name="vosmessages" options={{ title: 'Messages' }} />
-      <Tabs.Screen name="plan-de-jeu" options={{ title: 'Plan de jeu' }} />
       <Tabs.Screen name="fiche/[id]" options={{ title: 'Fiche' }} />
     </Tabs>
   );
