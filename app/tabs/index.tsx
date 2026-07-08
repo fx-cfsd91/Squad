@@ -123,6 +123,7 @@ export default function Home() {
 
   const allCards = useMemo(() => ([
   { key: 'adh',  title: 'ADHÉSION',   image: require('../../assets/images/adhesion-bg.png'), onPress: () => router.push('/tabs/adhesion'),       adminOnly: false },
+  { key: 'learn', title: 'APPRENDS-MOI', image: require('../../assets/images/image_cours.png'), onPress: () => Linking.openURL('https://cfsd91.com/appli/plan-de-jeu-cfsd91-light.html'), adminOnly: false },
   { key: 'eval', title: 'EVALUATIONS',  image: require('../../assets/images/evaluations-bg.png'), onPress: () => router.push('/tabs/evaluations'),   adminOnly: false, identifieOnly: true },
   { key: 'rec',  title: 'RÉCAPITULATIF',      image: require('../../assets/images/recapitulatif-bg.png'), onPress: () => router.push('/tabs/recapitulatif'), adminOnly: true  },
   { key: 'pres', title: 'PRESENCE',    image: require('../../assets/images/presence-bg.png'), onPress: () => router.push('/tabs/Presence'),       adminOnly: true },
